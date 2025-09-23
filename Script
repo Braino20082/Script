@@ -141,6 +141,8 @@ local playerSpeed = 16
 local espEnabled = false
 local nameEnabled = false
 local espConnections = {}
+local hitboxColor = Color3.fromRGB(255, 0, 0) -- Standard Rot
+local nameColor = Color3.fromRGB(255, 255, 255) -- Standard Weiß
 
 -- Panels
 local panels = {}
@@ -183,8 +185,11 @@ local function updateESP(state)
                         box.Adornee = root
                         box.AlwaysOnTop = true
                         box.Transparency = 0.7
-                        box.Color3 = Color3.fromRGB(255, 0, 0)
+                        box.Color3 = hitboxColor
                         box.Parent = root
+                    else
+                        -- Update existing color
+                        root.HitboxESP.Color3 = hitboxColor
                     end
                 else
                     local esp = root:FindFirstChild("HitboxESP")
@@ -214,11 +219,17 @@ local function updateNames(state)
                     nameLabel.BackgroundTransparency = 1
                     nameLabel.Text = plr.Name
                     nameLabel.Font = Enum.Font.GothamBold
-                    nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    nameLabel.TextColor3 = nameColor
                     nameLabel.TextScaled = true
                     nameLabel.TextStrokeTransparency = 0
                     nameLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
                     nameLabel.Parent = billboard
+                else
+                    -- Update existing color
+                    local nameLabel = head.NameESP:FindFirstChild("TextLabel")
+                    if nameLabel then
+                        nameLabel.TextColor3 = nameColor
+                    end
                 end
             else
                 local nameESP = head:FindFirstChild("NameESP")
@@ -330,7 +341,71 @@ local function createSlider(parent, labelText, position, minVal, maxVal, current
         end
     end)
     
-    return sliderFrame
+local function createColorPicker(parent, labelText, position, currentColor, callback)
+    local colorFrame = Instance.new("Frame")
+    colorFrame.Size = UDim2.new(1, -20, 0, 80)
+    colorFrame.Position = position
+    colorFrame.BackgroundTransparency = 1
+    colorFrame.Parent = parent
+    
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, 0, 0, 20)
+    label.Position = UDim2.new(0, 0, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = labelText
+    label.Font = Enum.Font.Gotham
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.TextSize = 12
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = colorFrame
+    
+    local colorPreview = Instance.new("Frame")
+    colorPreview.Size = UDim2.new(0, 40, 0, 20)
+    colorPreview.Position = UDim2.new(0, 0, 0, 25)
+    colorPreview.BackgroundColor3 = currentColor
+    colorPreview.BorderSizePixel = 1
+    colorPreview.BorderColor3 = Color3.fromRGB(255, 255, 255)
+    colorPreview.Parent = colorFrame
+    
+    local colorCorner = Instance.new("UICorner")
+    colorCorner.CornerRadius = UDim.new(0, 4)
+    colorCorner.Parent = colorPreview
+    
+    -- Color buttons
+    local colors = {
+        {Color3.fromRGB(255, 0, 0), "Red"},
+        {Color3.fromRGB(0, 255, 0), "Green"}, 
+        {Color3.fromRGB(0, 0, 255), "Blue"},
+        {Color3.fromRGB(255, 255, 0), "Yellow"},
+        {Color3.fromRGB(255, 0, 255), "Magenta"},
+        {Color3.fromRGB(0, 255, 255), "Cyan"},
+        {Color3.fromRGB(255, 255, 255), "White"},
+        {Color3.fromRGB(255, 165, 0), "Orange"}
+    }
+    
+    for i, colorData in ipairs(colors) do
+        local colorBtn = Instance.new("TextButton")
+        colorBtn.Size = UDim2.new(0, 20, 0, 20)
+        colorBtn.Position = UDim2.new(0, 50 + (i-1) * 25, 0, 25)
+        colorBtn.BackgroundColor3 = colorData[1]
+        colorBtn.BorderSizePixel = 1
+        colorBtn.BorderColor3 = Color3.fromRGB(255, 255, 255)
+        colorBtn.Text = ""
+        colorBtn.Parent = colorFrame
+        
+        local btnCorner = Instance.new("UICorner")
+        btnCorner.CornerRadius = UDim.new(0, 4)
+        btnCorner.Parent = colorBtn
+        
+        colorBtn.MouseButton1Click:Connect(function()
+            colorPreview.BackgroundColor3 = colorData[1]
+            if callback then
+                callback(colorData[1])
+            end
+        end)
+    end
+    
+    return colorFrame
 end
 
 ---------------------------
@@ -379,7 +454,7 @@ local function createESPPanel()
     panel.Position = UDim2.new(0, 0, 0, 0)
     panel.BackgroundTransparency = 1
     panel.ScrollBarThickness = 6
-    panel.CanvasSize = UDim2.new(0, 0, 0, 200)
+    panel.CanvasSize = UDim2.new(0, 0, 0, 400)
     panel.Visible = false
     panel.Parent = contentArea
     
@@ -396,7 +471,14 @@ local function createESPPanel()
         end
     end)
     
-    local nameBtn = createButton(panel, "Player Names: OFF", UDim2.new(0, 10, 0, 60), UDim2.new(1, -20, 0, 35))
+    local hitboxColorPicker = createColorPicker(panel, "Hitbox Color:", UDim2.new(0, 10, 0, 60), hitboxColor, function(newColor)
+        hitboxColor = newColor
+        if espEnabled then
+            updateESP(true) -- Refresh ESP with new color
+        end
+    end)
+    
+    local nameBtn = createButton(panel, "Player Names: OFF", UDim2.new(0, 10, 0, 160), UDim2.new(1, -20, 0, 35))
     nameBtn.MouseButton1Click:Connect(function()
         if nameEnabled then
             updateNames(false)
@@ -406,6 +488,13 @@ local function createESPPanel()
             updateNames(true)
             nameBtn.Text = "Player Names: ON"
             nameBtn.BackgroundColor3 = Color3.fromRGB(40, 167, 69)
+        end
+    end)
+    
+    local nameColorPicker = createColorPicker(panel, "Name Color:", UDim2.new(0, 10, 0, 210), nameColor, function(newColor)
+        nameColor = newColor
+        if nameEnabled then
+            updateNames(true) -- Refresh names with new color
         end
     end)
     
@@ -419,7 +508,7 @@ local function createSettingsPanel()
     panel.Position = UDim2.new(0, 0, 0, 0)
     panel.BackgroundTransparency = 1
     panel.ScrollBarThickness = 6
-    panel.CanvasSize = UDim2.new(0, 0, 0, 250)
+    panel.CanvasSize = UDim2.new(0, 0, 0, 300)
     panel.Visible = false
     panel.Parent = contentArea
     
@@ -432,14 +521,31 @@ local function createSettingsPanel()
         updateNames(false)
         playerSpeed = 16
         flySpeed = 50
+        hitboxColor = Color3.fromRGB(255, 0, 0)
+        nameColor = Color3.fromRGB(255, 255, 255)
         showNotification("Settings", "All settings have been reset!", 3)
     end)
     
+    local keybindInfo = Instance.new("TextLabel")
+    keybindInfo.Size = UDim2.new(1, -20, 0, 40)
+    keybindInfo.Position = UDim2.new(0, 10, 0, 60)
+    keybindInfo.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    keybindInfo.BorderSizePixel = 0
+    keybindInfo.Text = "Press F to toggle GUI visibility"
+    keybindInfo.Font = Enum.Font.GothamBold
+    keybindInfo.TextColor3 = Color3.fromRGB(0, 162, 255)
+    keybindInfo.TextSize = 14
+    keybindInfo.Parent = panel
+    
+    local keybindCorner = Instance.new("UICorner")
+    keybindCorner.CornerRadius = UDim.new(0, 6)
+    keybindCorner.Parent = keybindInfo
+    
     local aboutLabel = Instance.new("TextLabel")
-    aboutLabel.Size = UDim2.new(1, -20, 0, 80)
-    aboutLabel.Position = UDim2.new(0, 10, 0, 60)
+    aboutLabel.Size = UDim2.new(1, -20, 0, 120)
+    aboutLabel.Position = UDim2.new(0, 10, 0, 120)
     aboutLabel.BackgroundTransparency = 1
-    aboutLabel.Text = "ESP Menu v2.0\n\nFeatures:\n• Player ESP (Hitbox & Names)\n• Fly with custom speed\n• Custom walk speed\n• Drag & Resize window"
+    aboutLabel.Text = "ESP Menu v2.0\n\nFeatures:\n• Player ESP (Hitbox & Names)\n• Custom ESP Colors\n• Fly with custom speed\n• Custom walk speed\n• Drag & Resize window\n• F key toggle visibility"
     aboutLabel.Font = Enum.Font.Gotham
     aboutLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
     aboutLabel.TextSize = 12
@@ -516,11 +622,30 @@ end)
 local minimized = false
 minimizeBtn.MouseButton1Click:Connect(function()
     if minimized then
-        mainFrame.Size = UDim2.new(0, 600, 0, 400)
+        -- Expand
+        local expandTween = TweenService:Create(mainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+            Size = UDim2.new(0, 600, 0, 400)
+        })
+        expandTween:Play()
         minimizeBtn.Text = "-"
         minimized = false
+        
+        -- Show content after animation
+        expandTween.Completed:Connect(function()
+            sidebar.Visible = true
+            contentArea.Visible = true
+            resizeHandle.Visible = true
+        end)
     else
-        mainFrame.Size = UDim2.new(0, 600, 0, 35)
+        -- Minimize
+        sidebar.Visible = false
+        contentArea.Visible = false
+        resizeHandle.Visible = false
+        
+        local minimizeTween = TweenService:Create(mainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+            Size = UDim2.new(0, 600, 0, 35)
+        })
+        minimizeTween:Play()
         minimizeBtn.Text = "+"
         minimized = true
     end
@@ -649,9 +774,14 @@ end)
 showNotification("ESP Menu", "Successfully loaded ESP Menu v2.0!", 5)
 print("ESP Menu v2.0 loaded successfully!")
 
--- Keyboard shortcut to toggle GUI (F4)
+-- Keyboard shortcut to toggle GUI (F key)
 UserInput.InputBegan:Connect(function(input, gameProcessed)
-    if not gameProcessed and input.KeyCode == Enum.KeyCode.F4 then
-        mainFrame.Visible = not mainFrame.Visible
+    if not gameProcessed and input.KeyCode == Enum.KeyCode.F then
+        screenGui.Enabled = not screenGui.Enabled
+        if screenGui.Enabled then
+            showNotification("ESP Menu", "GUI is now visible", 2)
+        else
+            showNotification("ESP Menu", "GUI is now hidden", 2)
+        end
     end
 end)
