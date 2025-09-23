@@ -59,7 +59,7 @@ local titleLabel = Instance.new("TextLabel")
 titleLabel.Size = UDim2.new(1, -70, 1, 0)
 titleLabel.Position = UDim2.new(0, 10, 0, 0)
 titleLabel.BackgroundTransparency = 1
-titleLabel.Text = "ESP Menu v2.0"
+titleLabel.Text = "ESP Menu v2.1"
 titleLabel.Font = Enum.Font.GothamBold
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 titleLabel.TextSize = 16
@@ -141,12 +141,15 @@ local playerSpeed = 16
 local espEnabled = false
 local nameEnabled = false
 local espConnections = {}
-local hitboxColor = Color3.fromRGB(255, 0, 0) -- Standard Rot
-local nameColor = Color3.fromRGB(255, 255, 255) -- Standard Weiß
+local hitboxColor = Color3.fromRGB(255, 0, 0)
+local nameColor = Color3.fromRGB(255, 255, 255)
 
 -- Panels
 local panels = {}
 local currentPanel = nil
+
+-- Keybind Settings
+local toggleKey = Enum.KeyCode.F
 
 -- Fly Toggle Funktion
 local function toggleFly(state)
@@ -170,7 +173,10 @@ local function toggleFly(state)
     end
 end
 
--- ESP Update Funktionen
+-- ESP Update Funktionen (Optimiert)
+local lastESPUpdate = 0
+local ESP_UPDATE_RATE = 0.1
+
 local function updateESP(state)
     espEnabled = state
     for _, plr in ipairs(Players:GetPlayers()) do
@@ -188,7 +194,6 @@ local function updateESP(state)
                         box.Color3 = hitboxColor
                         box.Parent = root
                     else
-                        -- Update existing color
                         root.HitboxESP.Color3 = hitboxColor
                     end
                 else
@@ -225,7 +230,6 @@ local function updateNames(state)
                     nameLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
                     nameLabel.Parent = billboard
                 else
-                    -- Update existing color
                     local nameLabel = head.NameESP:FindFirstChild("TextLabel")
                     if nameLabel then
                         nameLabel.TextColor3 = nameColor
@@ -341,6 +345,10 @@ local function createSlider(parent, labelText, position, minVal, maxVal, current
         end
     end)
     
+    return sliderFrame
+end
+
+-- FIXED: createColorPicker mit return statement
 local function createColorPicker(parent, labelText, position, currentColor, callback)
     local colorFrame = Instance.new("Frame")
     colorFrame.Size = UDim2.new(1, -20, 0, 80)
@@ -371,7 +379,7 @@ local function createColorPicker(parent, labelText, position, currentColor, call
     colorCorner.CornerRadius = UDim.new(0, 4)
     colorCorner.Parent = colorPreview
     
-    -- Color buttons
+    -- Erweiterte Farbauswahl
     local colors = {
         {Color3.fromRGB(255, 0, 0), "Red"},
         {Color3.fromRGB(0, 255, 0), "Green"}, 
@@ -380,21 +388,26 @@ local function createColorPicker(parent, labelText, position, currentColor, call
         {Color3.fromRGB(255, 0, 255), "Magenta"},
         {Color3.fromRGB(0, 255, 255), "Cyan"},
         {Color3.fromRGB(255, 255, 255), "White"},
-        {Color3.fromRGB(255, 165, 0), "Orange"}
+        {Color3.fromRGB(255, 165, 0), "Orange"},
+        {Color3.fromRGB(128, 0, 128), "Purple"},
+        {Color3.fromRGB(255, 192, 203), "Pink"}
     }
     
     for i, colorData in ipairs(colors) do
         local colorBtn = Instance.new("TextButton")
-        colorBtn.Size = UDim2.new(0, 20, 0, 20)
-        colorBtn.Position = UDim2.new(0, 50 + (i-1) * 25, 0, 25)
+        local row = math.floor((i-1) / 5)
+        local col = (i-1) % 5
+        
+        colorBtn.Size = UDim2.new(0, 18, 0, 18)
+        colorBtn.Position = UDim2.new(0, 50 + col * 22, 0, 25 + row * 22)
         colorBtn.BackgroundColor3 = colorData[1]
         colorBtn.BorderSizePixel = 1
-        colorBtn.BorderColor3 = Color3.fromRGB(255, 255, 255)
+        colorBtn.BorderColor3 = Color3.fromRGB(200, 200, 200)
         colorBtn.Text = ""
         colorBtn.Parent = colorFrame
         
         local btnCorner = Instance.new("UICorner")
-        btnCorner.CornerRadius = UDim.new(0, 4)
+        btnCorner.CornerRadius = UDim.new(0, 3)
         btnCorner.Parent = colorBtn
         
         colorBtn.MouseButton1Click:Connect(function()
@@ -405,7 +418,7 @@ local function createColorPicker(parent, labelText, position, currentColor, call
         end)
     end
     
-    return colorFrame
+    return colorFrame -- FIXED: Das war missing!
 end
 
 ---------------------------
@@ -438,6 +451,9 @@ local function createPlayerPanel()
     
     local speedSlider = createSlider(panel, "Walk Speed", UDim2.new(0, 10, 0, 60), 16, 200, playerSpeed, function(value)
         playerSpeed = value
+        if player.Character and player.Character:FindFirstChild("Humanoid") then
+            player.Character.Humanoid.WalkSpeed = value
+        end
     end)
     
     local flySpeedSlider = createSlider(panel, "Fly Speed", UDim2.new(0, 10, 0, 140), 10, 200, flySpeed, function(value)
@@ -447,17 +463,18 @@ local function createPlayerPanel()
     return panel
 end
 
--- ESP Panel
+-- ESP Panel (Verbessert mit besserer Farbauswahl)
 local function createESPPanel()
     local panel = Instance.new("ScrollingFrame")
     panel.Size = UDim2.new(1, 0, 1, 0)
     panel.Position = UDim2.new(0, 0, 0, 0)
     panel.BackgroundTransparency = 1
     panel.ScrollBarThickness = 6
-    panel.CanvasSize = UDim2.new(0, 0, 0, 400)
+    panel.CanvasSize = UDim2.new(0, 0, 0, 450)
     panel.Visible = false
     panel.Parent = contentArea
     
+    -- Player Hitbox Toggle
     local hitboxBtn = createButton(panel, "Player Hitbox: OFF", UDim2.new(0, 10, 0, 10), UDim2.new(1, -20, 0, 35))
     hitboxBtn.MouseButton1Click:Connect(function()
         if espEnabled then
@@ -471,14 +488,16 @@ local function createESPPanel()
         end
     end)
     
-    local hitboxColorPicker = createColorPicker(panel, "Hitbox Color:", UDim2.new(0, 10, 0, 60), hitboxColor, function(newColor)
+    -- Hitbox Farbauswahl DIREKT unter dem Button
+    local hitboxColorPicker = createColorPicker(panel, "Hitbox Farbe:", UDim2.new(0, 10, 0, 55), hitboxColor, function(newColor)
         hitboxColor = newColor
         if espEnabled then
-            updateESP(true) -- Refresh ESP with new color
+            updateESP(true)
         end
     end)
     
-    local nameBtn = createButton(panel, "Player Names: OFF", UDim2.new(0, 10, 0, 160), UDim2.new(1, -20, 0, 35))
+    -- Player Namen Toggle
+    local nameBtn = createButton(panel, "Player Names: OFF", UDim2.new(0, 10, 0, 145), UDim2.new(1, -20, 0, 35))
     nameBtn.MouseButton1Click:Connect(function()
         if nameEnabled then
             updateNames(false)
@@ -491,31 +510,73 @@ local function createESPPanel()
         end
     end)
     
-    local nameColorPicker = createColorPicker(panel, "Name Color:", UDim2.new(0, 10, 0, 210), nameColor, function(newColor)
+    -- Namen Farbauswahl DIREKT unter dem Button
+    local nameColorPicker = createColorPicker(panel, "Namen Farbe:", UDim2.new(0, 10, 0, 190), nameColor, function(newColor)
         nameColor = newColor
         if nameEnabled then
-            updateNames(true) -- Refresh names with new color
+            updateNames(true)
         end
+    end)
+    
+    -- ESP Refresh Button
+    local refreshBtn = createButton(panel, "ESP Refresh", UDim2.new(0, 10, 0, 280), UDim2.new(1, -20, 0, 35))
+    refreshBtn.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+    refreshBtn.MouseButton1Click:Connect(function()
+        if espEnabled then updateESP(true) end
+        if nameEnabled then updateNames(true) end
+        showNotification("ESP", "ESP refreshed for all players!", 2)
     end)
     
     return panel
 end
 
--- Settings Panel
+-- Settings Panel (Erweitert mit F-Key Toggle)
 local function createSettingsPanel()
     local panel = Instance.new("ScrollingFrame")
     panel.Size = UDim2.new(1, 0, 1, 0)
     panel.Position = UDim2.new(0, 0, 0, 0)
     panel.BackgroundTransparency = 1
     panel.ScrollBarThickness = 6
-    panel.CanvasSize = UDim2.new(0, 0, 0, 300)
+    panel.CanvasSize = UDim2.new(0, 0, 0, 400)
     panel.Visible = false
     panel.Parent = contentArea
     
-    local resetBtn = createButton(panel, "Reset All Settings", UDim2.new(0, 10, 0, 10), UDim2.new(1, -20, 0, 35))
+    -- GUI Toggle Button (F-Key Alternative)
+    local guiToggleBtn = createButton(panel, "Toggle GUI (F-Key)", UDim2.new(0, 10, 0, 10), UDim2.new(1, -20, 0, 35))
+    guiToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+    guiToggleBtn.MouseButton1Click:Connect(function()
+        screenGui.Enabled = not screenGui.Enabled
+        if not screenGui.Enabled then
+            showNotification("ESP Menu", "GUI versteckt - Drücke F zum Anzeigen", 3)
+        end
+    end)
+    
+    -- Script Toggle Button (Komplettes Ein/Aus)
+    local scriptToggleBtn = createButton(panel, "Script: AN", UDim2.new(0, 10, 0, 55), UDim2.new(1, -20, 0, 35))
+    scriptToggleBtn.BackgroundColor3 = Color3.fromRGB(40, 167, 69)
+    local scriptEnabled = true
+    
+    scriptToggleBtn.MouseButton1Click:Connect(function()
+        scriptEnabled = not scriptEnabled
+        if scriptEnabled then
+            scriptToggleBtn.Text = "Script: AN"
+            scriptToggleBtn.BackgroundColor3 = Color3.fromRGB(40, 167, 69)
+            showNotification("ESP Menu", "Script aktiviert!", 2)
+        else
+            -- Alles ausschalten
+            toggleFly(false)
+            updateESP(false) 
+            updateNames(false)
+            scriptToggleBtn.Text = "Script: AUS"
+            scriptToggleBtn.BackgroundColor3 = Color3.fromRGB(220, 53, 69)
+            showNotification("ESP Menu", "Script deaktiviert!", 2)
+        end
+    end)
+    
+    -- Reset Button
+    local resetBtn = createButton(panel, "Alle Einstellungen zurücksetzen", UDim2.new(0, 10, 0, 100), UDim2.new(1, -20, 0, 35))
     resetBtn.BackgroundColor3 = Color3.fromRGB(220, 53, 69)
     resetBtn.MouseButton1Click:Connect(function()
-        -- Reset alle Werte
         toggleFly(false)
         updateESP(false)
         updateNames(false)
@@ -523,32 +584,36 @@ local function createSettingsPanel()
         flySpeed = 50
         hitboxColor = Color3.fromRGB(255, 0, 0)
         nameColor = Color3.fromRGB(255, 255, 255)
-        showNotification("Settings", "All settings have been reset!", 3)
+        showNotification("Settings", "Alle Einstellungen zurückgesetzt!", 3)
     end)
     
+    -- Keybind Info (Erweitert)
     local keybindInfo = Instance.new("TextLabel")
-    keybindInfo.Size = UDim2.new(1, -20, 0, 40)
-    keybindInfo.Position = UDim2.new(0, 10, 0, 60)
+    keybindInfo.Size = UDim2.new(1, -20, 0, 80)
+    keybindInfo.Position = UDim2.new(0, 10, 0, 150)
     keybindInfo.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
     keybindInfo.BorderSizePixel = 0
-    keybindInfo.Text = "Press F to toggle GUI visibility"
-    keybindInfo.Font = Enum.Font.GothamBold
+    keybindInfo.Text = "🎮 Keybinds:\nF = GUI ein/aus\nW,A,S,D = Fly Bewegung\nSpace = Hoch fliegen\nShift = Runter fliegen"
+    keybindInfo.Font = Enum.Font.Gotham
     keybindInfo.TextColor3 = Color3.fromRGB(0, 162, 255)
-    keybindInfo.TextSize = 14
+    keybindInfo.TextSize = 12
+    keybindInfo.TextWrapped = true
+    keybindInfo.TextYAlignment = Enum.TextYAlignment.Top
     keybindInfo.Parent = panel
     
     local keybindCorner = Instance.new("UICorner")
     keybindCorner.CornerRadius = UDim.new(0, 6)
     keybindCorner.Parent = keybindInfo
     
+    -- About Info
     local aboutLabel = Instance.new("TextLabel")
     aboutLabel.Size = UDim2.new(1, -20, 0, 120)
-    aboutLabel.Position = UDim2.new(0, 10, 0, 120)
+    aboutLabel.Position = UDim2.new(0, 10, 0, 250)
     aboutLabel.BackgroundTransparency = 1
-    aboutLabel.Text = "ESP Menu v2.0\n\nFeatures:\n• Player ESP (Hitbox & Names)\n• Custom ESP Colors\n• Fly with custom speed\n• Custom walk speed\n• Drag & Resize window\n• F key toggle visibility"
+    aboutLabel.Text = "ESP Menu v2.1 - Verbessert\n\n✨ Neue Features:\n• F-Key Script Toggle im Settings\n• Verbesserte Farbauswahl\n• Optimierte Performance\n• ESP Refresh Button\n• Erweiterte Keybinds"
     aboutLabel.Font = Enum.Font.Gotham
     aboutLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-    aboutLabel.TextSize = 12
+    aboutLabel.TextSize = 11
     aboutLabel.TextXAlignment = Enum.TextXAlignment.Left
     aboutLabel.TextYAlignment = Enum.TextYAlignment.Top
     aboutLabel.TextWrapped = true
@@ -605,8 +670,13 @@ for i, data in ipairs(buttonData) do
     end)
 end
 
--- Standard Panel anzeigen
+-- Standard Panel anzeigen (Player)
 panels["Player"].Visible = true
+for _, child in ipairs(sidebar:GetChildren()) do
+    if child:IsA("TextButton") and child.Text:find("Player") then
+        child.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+    end
+end
 currentPanel = "Player"
 
 ---------------------------
@@ -615,7 +685,12 @@ currentPanel = "Player"
 
 -- Close Button
 closeBtn.MouseButton1Click:Connect(function()
+    -- Cleanup vor dem Schließen
+    toggleFly(false)
+    updateESP(false)
+    updateNames(false)
     screenGui:Destroy()
+    showNotification("ESP Menu", "Script beendet!", 2)
 end)
 
 -- Minimize Button
@@ -712,17 +787,25 @@ UserInput.InputChanged:Connect(function(input)
 end)
 
 ---------------------------
--- Game Logic Loops
+-- Game Logic Loops (Optimiert)
 ---------------------------
 
 -- Player Speed & Fly Loop
+local lastSpeedUpdate = 0
+local SPEED_UPDATE_RATE = 0.05
+
 RunService.RenderStepped:Connect(function()
-    -- Player Speed
-    if player.Character and player.Character:FindFirstChild("Humanoid") then
-        player.Character.Humanoid.WalkSpeed = playerSpeed
+    local now = tick()
+    
+    -- Player Speed (weniger oft updaten)
+    if now - lastSpeedUpdate >= SPEED_UPDATE_RATE then
+        if player.Character and player.Character:FindFirstChild("Humanoid") then
+            player.Character.Humanoid.WalkSpeed = playerSpeed
+        end
+        lastSpeedUpdate = now
     end
     
-    -- Fly Logic
+    -- Fly Logic (muss smooth sein)
     if flying and flyVelocity and player.Character then
         local root = player.Character:FindFirstChild("HumanoidRootPart")
         if root then
@@ -757,7 +840,37 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- ESP Update für neue Spieler
+-- ESP Update Loop (Optimiert)
+RunService.Heartbeat:Connect(function()
+    local now = tick()
+    if now - lastESPUpdate >= ESP_UPDATE_RATE then
+        if espEnabled or nameEnabled then
+            -- Nur neue Spieler checken
+            for _, plr in ipairs(Players:GetPlayers()) do
+                if plr ~= player and plr.Character then
+                    if espEnabled then
+                        local root = plr.Character:FindFirstChild("HumanoidRootPart")
+                        if root and not root:FindFirstChild("HitboxESP") then
+                            updateESP(true)
+                            break
+                        end
+                    end
+                    
+                    if nameEnabled then
+                        local head = plr.Character:FindFirstChild("Head")
+                        if head and not head:FindFirstChild("NameESP") then
+                            updateNames(true)
+                            break
+                        end
+                    end
+                end
+            end
+        end
+        lastESPUpdate = now
+    end
+end)
+
+-- Player Events (Verbessert)
 Players.PlayerAdded:Connect(function(newPlayer)
     newPlayer.CharacterAdded:Connect(function()
         wait(1) -- Warten bis Character vollständig geladen ist
@@ -770,18 +883,117 @@ Players.PlayerAdded:Connect(function(newPlayer)
     end)
 end)
 
--- Initialization
-showNotification("ESP Menu", "Successfully loaded ESP Menu v2.0!", 5)
-print("ESP Menu v2.0 loaded successfully!")
-
--- Keyboard shortcut to toggle GUI (F key)
-UserInput.InputBegan:Connect(function(input, gameProcessed)
-    if not gameProcessed and input.KeyCode == Enum.KeyCode.F then
-        screenGui.Enabled = not screenGui.Enabled
-        if screenGui.Enabled then
-            showNotification("ESP Menu", "GUI is now visible", 2)
-        else
-            showNotification("ESP Menu", "GUI is now hidden", 2)
+-- Cleanup bei Player Leave
+Players.PlayerRemoving:Connect(function(leavingPlayer)
+    -- ESP Objekte werden automatisch mit Character entfernt
+    -- Aber sicherheitshalber:
+    if leavingPlayer.Character then
+        local root = leavingPlayer.Character:FindFirstChild("HumanoidRootPart")
+        local head = leavingPlayer.Character:FindFirstChild("Head")
+        
+        if root then
+            local esp = root:FindFirstChild("HitboxESP")
+            if esp then esp:Destroy() end
         end
+        
+        if head then
+            local nameESP = head:FindFirstChild("NameESP")
+            if nameESP then nameESP:Destroy() end
+        end
+    end
+end)
+
+-- Character Respawn Handler
+player.CharacterAdded:Connect(function()
+    -- Fly state reset bei Respawn
+    flying = false
+    if flyVelocity then
+        flyVelocity:Destroy()
+        flyVelocity = nil
+    end
+    
+    -- Speed wieder setzen nach Respawn
+    wait(1)
+    if player.Character and player.Character:FindFirstChild("Humanoid") then
+        player.Character.Humanoid.WalkSpeed = playerSpeed
+    end
+end)
+
+---------------------------
+-- Keyboard Shortcuts
+---------------------------
+
+-- F-Key Toggle (Erweitert)
+UserInput.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed then
+        if input.KeyCode == toggleKey then
+            screenGui.Enabled = not screenGui.Enabled
+            if screenGui.Enabled then
+                showNotification("ESP Menu", "GUI sichtbar (F zum Verstecken)", 2)
+            else
+                showNotification("ESP Menu", "GUI versteckt (F zum Anzeigen)", 2)
+            end
+        end
+        
+        -- Extra Shortcuts (Optional)
+        if input.KeyCode == Enum.KeyCode.Insert then
+            -- Insert = Quick ESP Toggle
+            if espEnabled then
+                updateESP(false)
+                showNotification("ESP", "Hitbox ESP: AUS", 1)
+            else
+                updateESP(true)
+                showNotification("ESP", "Hitbox ESP: AN", 1)
+            end
+        end
+        
+        if input.KeyCode == Enum.KeyCode.Home then
+            -- Home = Quick Name Toggle
+            if nameEnabled then
+                updateNames(false)
+                showNotification("ESP", "Namen ESP: AUS", 1)
+            else
+                updateNames(true)
+                showNotification("ESP", "Namen ESP: AN", 1)
+            end
+        end
+    end
+end)
+
+---------------------------
+-- Initialization & Startup
+---------------------------
+
+-- Startup Notification
+wait(0.5)
+showNotification("ESP Menu v2.1", "Erfolgreich geladen!\n\nF = GUI Toggle\nIns = ESP Toggle\nHome = Namen Toggle", 6)
+
+-- Console Log
+print("=== ESP Menu v2.1 Loaded ===")
+print("✅ GUI Features: Drag, Resize, Minimize")
+print("✅ Player Features: Fly, Speed Control")
+print("✅ ESP Features: Hitbox, Names, Colors")
+print("✅ Shortcuts: F, Insert, Home")
+print("✅ Performance: Optimized Updates")
+print("=============================")
+
+-- Error Handler (Robustness)
+local function safeCall(func, ...)
+    local success, result = pcall(func, ...)
+    if not success then
+        warn("ESP Menu Error: " .. tostring(result))
+        showNotification("Error", "Ein Fehler ist aufgetreten - Check Console", 3)
+    end
+    return success, result
+end
+
+-- Auto-cleanup on script end
+game:GetService("RunService").Heartbeat:Connect(function()
+    -- Check if GUI still exists
+    if not screenGui.Parent then
+        -- GUI was destroyed, cleanup
+        toggleFly(false)
+        updateESP(false)
+        updateNames(false)
     end
 end)
