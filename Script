@@ -1,1 +1,485 @@
+-- StarterGui > LocalScript
+local Players = game:GetService("Players")
+local UserInput = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
 
+-- alte GUIs löschen
+for _,v in ipairs(playerGui:GetChildren()) do
+	if v.Name == "CustomMainUI" then v:Destroy() end
+end
+
+-- Root ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "CustomMainUI"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = playerGui
+
+-- Hauptframe
+local app = Instance.new("Frame")
+app.Size = UDim2.new(0.5,0,0.6,0)
+app.Position = UDim2.new(0.25,0,0.2,0)
+app.BackgroundColor3 = Color3.fromRGB(28,28,28)
+app.BorderSizePixel = 0
+app.Parent = screenGui
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0,8)
+corner.Parent = app
+
+-- Dragbar
+local dragBar = Instance.new("Frame")
+dragBar.Size = UDim2.new(1,0,0.08,0)
+dragBar.BackgroundColor3 = Color3.fromRGB(40,40,40)
+dragBar.BorderSizePixel = 0
+dragBar.Parent = app
+
+local dragLabel = Instance.new("TextLabel")
+dragLabel.Size = UDim2.new(1,0,1,0)
+dragLabel.BackgroundTransparency = 1
+dragLabel.Text = "Custom Menu"
+dragLabel.Font = Enum.Font.SourceSansBold
+dragLabel.TextColor3 = Color3.new(1,1,1)
+dragLabel.TextScaled = true
+dragLabel.Parent = dragBar
+
+-- Close Button
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0.05,0,0.8,0)
+closeBtn.Position = UDim2.new(0.95,0,0.1,0)
+closeBtn.Text = "X"
+closeBtn.Font = Enum.Font.SourceSansBold
+closeBtn.TextScaled = true
+closeBtn.BackgroundColor3 = Color3.fromRGB(150,50,50)
+closeBtn.TextColor3 = Color3.new(1,1,1)
+closeBtn.Parent = dragBar
+closeBtn.MouseButton1Click:Connect(function()
+	app.Visible = false
+end)
+
+-- Sidebar
+local sidebar = Instance.new("Frame")
+sidebar.Size = UDim2.new(0.25,0,0.92,0)
+sidebar.Position = UDim2.new(0,0,0.08,0)
+sidebar.BackgroundColor3 = Color3.fromRGB(36,36,36)
+sidebar.BorderSizePixel = 0
+sidebar.Parent = app
+
+-- Content
+local content = Instance.new("Frame")
+content.Size = UDim2.new(0.75,0,0.92,0)
+content.Position = UDim2.new(0.25,0,0.08,0)
+content.BackgroundColor3 = Color3.fromRGB(24,24,24)
+content.BorderSizePixel = 0
+content.Parent = app
+
+-- Panels
+local panels = {}
+local buttonNames = {"Player","ESP","Voice"}
+
+for i,name in ipairs(buttonNames) do
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(0.9,0,0.12,0)
+	btn.Position = UDim2.new(0.05,0,(i-1)*0.14,0)
+	btn.Text = name
+	btn.Font = Enum.Font.SourceSansBold
+	btn.TextScaled = true
+	btn.BackgroundColor3 = Color3.fromRGB(58,58,58)
+	btn.TextColor3 = Color3.new(1,1,1)
+	btn.Parent = sidebar
+
+	local panel = Instance.new("Frame")
+	panel.Size = UDim2.new(1,-20,1,-20)
+	panel.Position = UDim2.new(0,10,0,10)
+	panel.BackgroundTransparency = 1
+	panel.Visible = false
+	panel.Parent = content
+	panels[name] = panel
+
+	btn.MouseButton1Click:Connect(function()
+		for _,p in pairs(panels) do p.Visible = false end
+		panel.Visible = true
+	end)
+end
+if panels["Player"] then panels["Player"].Visible = true end
+
+---------------------------
+-- Funktionen
+---------------------------
+
+-- Fly Variablen
+local flying = false
+local flySpeed = 50
+local flyVelocity
+
+local function toggleFly(state)
+	if state then
+		if not flyVelocity then
+			local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+			if root then
+				flyVelocity = Instance.new("BodyVelocity")
+				flyVelocity.MaxForce = Vector3.new(1e5,1e5,1e5)
+				flyVelocity.Velocity = Vector3.zero
+				flyVelocity.Parent = root
+			end
+		end
+		flying = true
+	else
+		flying = false
+		if flyVelocity then flyVelocity:Destroy() flyVelocity = nil end
+	end
+end
+
+-- Noclip
+local noclip = false
+RunService.RenderStepped:Connect(function()
+	if noclip and player.Character then
+		for _,part in pairs(player.Character:GetChildren()) do
+			if part:IsA("BasePart") then
+				part.CanCollide = false
+			end
+		end
+	end
+end)
+
+-- ESP Hitbox / Name
+local espEnabled = false
+local nameEnabled = false
+
+local function updateESP(state)
+	espEnabled = state
+	for _,plr in ipairs(Players:GetPlayers()) do
+		if plr ~= player and plr.Character then
+			local root = plr.Character:FindFirstChild("HumanoidRootPart")
+			if root then
+				if state then
+					if not root:FindFirstChild("HitboxESP") then
+						local box = Instance.new("BoxHandleAdornment")
+						box.Name = "HitboxESP"
+						box.Size = root.Size * 3
+						box.Adornee = root
+						box.AlwaysOnTop = true
+						box.Transparency = 0.8
+						box.Parent = root
+					end
+				else
+					if root:FindFirstChild("HitboxESP") then
+						root.HitboxESP:Destroy()
+					end
+				end
+			end
+		end
+	end
+end
+
+local function updateNames(state)
+	nameEnabled = state
+	for _,plr in ipairs(Players:GetPlayers()) do
+		if plr ~= player and plr.Character and plr.Character:FindFirstChild("Head") then
+			local head = plr.Character.Head
+			if state then
+				if not head:FindFirstChild("NameESP") then
+					local tag = Instance.new("BillboardGui")
+					tag.Name = "NameESP"
+					tag.Size = UDim2.new(0,100,0,50)
+					tag.AlwaysOnTop = true
+					tag.Adornee = head
+					tag.Parent = head
+					local text = Instance.new("TextLabel")
+					text.Size = UDim2.new(1,0,1,0)
+					text.BackgroundTransparency = 1
+					text.Text = plr.Name
+					text.Font = Enum.Font.SourceSansBold
+					text.TextScaled = true
+					text.Parent = tag
+				end
+			else
+				if head:FindFirstChild("NameESP") then
+					head.NameESP:Destroy()
+				end
+			end
+		end
+	end
+end
+
+-- Voice Fake "Unban"
+local function showNotification(msg)
+	StarterGui:SetCore("SendNotification", {
+		Title = "Voice System",
+		Text = msg,
+		Duration = 3
+	})
+end
+
+-- Fly + Player Speed
+local playerSpeed = 16
+RunService.RenderStepped:Connect(function()
+	if player.Character and player.Character:FindFirstChild("Humanoid") then
+		player.Character.Humanoid.WalkSpeed = playerSpeed
+	end
+	if flying and flyVelocity and player.Character then
+		local root = player.Character:FindFirstChild("HumanoidRootPart")
+		if root then
+			local move = Vector3.zero
+			if UserInput:IsKeyDown(Enum.KeyCode.W) then move = move + workspace.CurrentCamera.CFrame.LookVector end
+			if UserInput:IsKeyDown(Enum.KeyCode.S) then move = move - workspace.CurrentCamera.CFrame.LookVector end
+			if UserInput:IsKeyDown(Enum.KeyCode.A) then move = move - workspace.CurrentCamera.CFrame.RightVector end
+			if UserInput:IsKeyDown(Enum.KeyCode.D) then move = move + workspace.CurrentCamera.CFrame.RightVector end
+			if move.Magnitude == 0 then
+				flyVelocity.Velocity = Vector3.new(0,0,0)
+			else
+				flyVelocity.Velocity = move.Unit * flySpeed
+			end
+		end
+	end
+end)
+
+---------------------------
+-- Player Panel Inhalte
+---------------------------
+do
+	local panel = panels["Player"]
+
+	local flyBtn = Instance.new("TextButton")
+	flyBtn.Size = UDim2.new(0.4,0,0.1,0)
+	flyBtn.Position = UDim2.new(0,0,0,0)
+	flyBtn.Text = "Fly OFF"
+	flyBtn.Parent = panel
+
+	flyBtn.MouseButton1Click:Connect(function()
+		if flying then
+			toggleFly(false)
+			flyBtn.Text = "Fly OFF"
+		else
+			toggleFly(true)
+			flyBtn.Text = "Fly ON"
+		end
+	end)
+
+	-- Player Speed Slider
+	local speedLabel = Instance.new("TextLabel")
+	speedLabel.Size = UDim2.new(0.4,0,0.05,0)
+	speedLabel.Position = UDim2.new(0,0,0.15,0)
+	speedLabel.Text = "Speed: "..playerSpeed
+	speedLabel.BackgroundTransparency = 1
+	speedLabel.TextColor3 = Color3.new(1,1,1)
+	speedLabel.Parent = panel
+
+	local speedSlider = Instance.new("Frame")
+	speedSlider.Size = UDim2.new(0.6,0,0.05,0)
+	speedSlider.Position = UDim2.new(0.35,0,0.15,0)
+	speedSlider.BackgroundColor3 = Color3.fromRGB(50,50,50)
+	speedSlider.Parent = panel
+
+	local speedFill = Instance.new("Frame")
+	speedFill.Size = UDim2.new((playerSpeed-16)/200,0,1,0)
+	speedFill.BackgroundColor3 = Color3.fromRGB(0,255,255)
+	speedFill.Parent = speedSlider
+
+	local draggingSpeed = false
+	speedSlider.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			draggingSpeed = true
+		end
+	end)
+	speedSlider.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			draggingSpeed = false
+		end
+	end)
+	UserInput.InputChanged:Connect(function(input)
+		if draggingSpeed and input.UserInputType == Enum.UserInputType.MouseMovement then
+			local x = math.clamp(input.Position.X - speedSlider.AbsolutePosition.X, 0, speedSlider.AbsoluteSize.X)
+			local ratio = x / speedSlider.AbsoluteSize.X
+			playerSpeed = math.floor(16 + ratio * (200-16))
+			speedFill.Size = UDim2.new(ratio,0,1,0)
+			speedLabel.Text = "Speed: "..playerSpeed
+		end
+	end)
+
+	-- Fly Speed Slider
+	local flyLabel = Instance.new("TextLabel")
+	flyLabel.Size = UDim2.new(0.4,0,0.05,0)
+	flyLabel.Position = UDim2.new(0,0,0.25,0)
+	flyLabel.Text = "FlySpeed: "..flySpeed
+	flyLabel.BackgroundTransparency = 1
+	flyLabel.TextColor3 = Color3.new(1,1,1)
+	flyLabel.Parent = panel
+
+	local flySlider = Instance.new("Frame")
+	flySlider.Size = UDim2.new(0.6,0,0.05,0)
+	flySlider.Position = UDim2.new(0.35,0,0.25,0)
+	flySlider.BackgroundColor3 = Color3.fromRGB(50,50,50)
+	flySlider.Parent = panel
+
+	local flyFill = Instance.new("Frame")
+	flyFill.Size = UDim2.new(flySpeed/200,0,1,0)
+	flyFill.BackgroundColor3 = Color3.fromRGB(255,255,0)
+	flyFill.Parent = flySlider
+
+	local draggingFly = false
+	flySlider.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			draggingFly = true
+		end
+	end)
+	flySlider.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			draggingFly = false
+		end
+	end)
+	UserInput.InputChanged:Connect(function(input)
+		if draggingFly and input.UserInputType == Enum.UserInputType.MouseMovement then
+			local x = math.clamp(input.Position.X - flySlider.AbsolutePosition.X, 0, flySlider.AbsoluteSize.X)
+			local ratio = x / flySlider.AbsoluteSize.X
+			flySpeed = math.floor(ratio*200)
+			flyFill.Size = UDim2.new(ratio,0,1,0)
+			flyLabel.Text = "FlySpeed: "..flySpeed
+		end
+	end)
+end
+
+---------------------------
+-- ESP Panel Inhalte
+---------------------------
+do
+	local panel = panels["ESP"]
+
+	local hitboxBtn = Instance.new("TextButton")
+	hitboxBtn.Size = UDim2.new(0.6,0,0.1,0)
+	hitboxBtn.Position = UDim2.new(0,0,0,0)
+	hitboxBtn.Text = "Hitbox OFF"
+	hitboxBtn.Parent = panel
+
+	hitboxBtn.MouseButton1Click:Connect(function()
+		if espEnabled then
+			updateESP(false)
+			hitboxBtn.Text = "Hitbox OFF"
+		else
+			updateESP(true)
+			hitboxBtn.Text = "Hitbox ON"
+		end
+	end)
+
+	local nameBtn = Instance.new("TextButton")
+	nameBtn.Size = UDim2.new(0.6,0,0.1,0)
+	nameBtn.Position = UDim2.new(0,0,0.15,0)
+	nameBtn.Text = "Names OFF"
+	nameBtn.Parent = panel
+
+	nameBtn.MouseButton1Click:Connect(function()
+		if nameEnabled then
+			updateNames(false)
+			nameBtn.Text = "Names OFF"
+		else
+			updateNames(true)
+			nameBtn.Text = "Names ON"
+		end
+	end)
+end
+
+---------------------------
+-- Voice Panel Inhalte
+---------------------------
+do
+	local panel = panels["Voice"]
+
+	local banBtn = Instance.new("TextButton")
+	banBtn.Size = UDim2.new(0.6,0,0.1,0)
+	banBtn.Position = UDim2.new(0,0,0,0)
+	banBtn.Text = "Voice Ban"
+	banBtn.Parent = panel
+
+	local endbanBtn = Instance.new("TextButton")
+	endbanBtn.Size = UDim2.new(0.6,0,0.1,0)
+	endbanBtn.Position = UDim2.new(0,0,0.15,0)
+	endbanBtn.Text = "Voice Endban"
+	endbanBtn.Visible = false
+	endbanBtn.Parent = panel
+
+	banBtn.MouseButton1Click:Connect(function()
+		banBtn.Visible = false
+		endbanBtn.Visible = true
+		-- Voice Reset
+		local voiceGui = player.PlayerGui:FindFirstChild("VoiceChat")
+		if voiceGui then
+			voiceGui.Enabled = false
+			wait(0.5)
+			voiceGui.Enabled = true
+		end
+		showNotification("Voice wurde neu gestartet!")
+	end)
+
+	endbanBtn.MouseButton1Click:Connect(function()
+		showNotification("Du wurdest entbannt (Voice Endban)")
+	end)
+end
+
+---------------------------
+-- Drag + Resize
+---------------------------
+do
+	local dragging, dragInput, dragStart, startPos
+	dragBar.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = true
+			dragStart = input.Position
+			startPos = app.Position
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					dragging = false
+				end
+			end)
+		end
+	end)
+	dragBar.InputChanged:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement then
+			dragInput = input
+		end
+	end)
+	UserInput.InputChanged:Connect(function(input)
+		if input == dragInput and dragging then
+			local delta = input.Position - dragStart
+			app.Position = UDim2.new(
+				startPos.X.Scale, startPos.X.Offset + delta.X,
+				startPos.Y.Scale, startPos.Y.Offset + delta.Y
+			)
+		end
+	end)
+end
+
+local resize = Instance.new("Frame")
+resize.Size = UDim2.new(0.03,0,0.05,0)
+resize.Position = UDim2.new(0.97,0,0.95,0)
+resize.BackgroundColor3 = Color3.fromRGB(80,80,80)
+resize.BorderSizePixel = 0
+resize.Parent = app
+
+do
+	local resizing, startSize, mouseStart
+	resize.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			resizing = true
+			startSize = app.Size
+			mouseStart = input.Position
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					resizing = false
+				end
+			end)
+		end
+	end)
+	UserInput.InputChanged:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement and resizing then
+			local delta = input.Position - mouseStart
+			app.Size = UDim2.new(
+				startSize.X.Scale, startSize.X.Offset + delta.X,
+				startSize.Y.Scale, startSize.Y.Offset + delta.Y
+			)
+		end
+	end)
+end
+
+print("GUI mit Fly, Speed, ESP, Voice Reset geladen")
