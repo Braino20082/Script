@@ -1,155 +1,71 @@
---[[ 
-   Komplettes Admin Panel + ESP
-   Features: ESP, Nametags, Fly, WalkSpeed/JumpPower, Player List, Teleport, Spectate, ColorPicker
---]]
-
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInput = game:GetService("UserInputService")
-local StarterGui = game:GetService("StarterGui")
-local TweenService = game:GetService("TweenService")
 local player = Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
 
--- Alte GUI entfernen
-if playerGui:FindFirstChild("ESPMainUI") then
-    playerGui.ESPMainUI:Destroy()
-end
+local espEnabled = true
+local nameEnabled = true
+local flying = false
+local flyVelocity = nil
+local flySpeed = 50
+local playerSpeed = 16
+local jumpPower = 50
 
--- ======= GUI Setup =======
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "ESPMainUI"
-screenGui.ResetOnSpawn = false
-screenGui.Parent = playerGui
-
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 800, 0, 500)
-mainFrame.Position = UDim2.new(0.5, -400, 0.5, -250)
-mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-mainFrame.BorderSizePixel = 0
-mainFrame.Parent = screenGui
-Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 12)
-
--- Title Bar
-local titleBar = Instance.new("Frame")
-titleBar.Size = UDim2.new(1, 0, 0, 35)
-titleBar.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-titleBar.BorderSizePixel = 0
-titleBar.Parent = mainFrame
-Instance.new("UICorner", titleBar).CornerRadius = UDim.new(0, 12)
-
-local titleLabel = Instance.new("TextLabel")
-titleLabel.Size = UDim2.new(1, -70, 1, 0)
-titleLabel.Position = UDim2.new(0, 10, 0, 0)
-titleLabel.BackgroundTransparency = 1
-titleLabel.Text = "ESP Admin Panel v5"
-titleLabel.Font = Enum.Font.GothamBold
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-titleLabel.TextSize = 16
-titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-titleLabel.Parent = titleBar
-
-local closeBtn = Instance.new("TextButton")
-closeBtn.Size = UDim2.new(0, 25, 0, 25)
-closeBtn.Position = UDim2.new(1, -30, 0, 5)
-closeBtn.Text = "×"
-closeBtn.Font = Enum.Font.GothamBold
-closeBtn.TextSize = 18
-closeBtn.BackgroundColor3 = Color3.fromRGB(220, 53, 69)
-closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-closeBtn.BorderSizePixel = 0
-closeBtn.Parent = titleBar
-Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 4)
-closeBtn.MouseButton1Click:Connect(function() screenGui.Enabled = false end)
-
--- Sidebar
-local sidebar = Instance.new("Frame")
-sidebar.Size = UDim2.new(0, 150, 1, -35)
-sidebar.Position = UDim2.new(0, 0, 0, 35)
-sidebar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-sidebar.BorderSizePixel = 0
-sidebar.Parent = mainFrame
-
--- Content Area
-local contentArea = Instance.new("Frame")
-contentArea.Size = UDim2.new(1, -150, 1, -35)
-contentArea.Position = UDim2.new(0, 150, 0, 35)
-contentArea.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-contentArea.BorderSizePixel = 0
-contentArea.Parent = mainFrame
-
--- ======= Variablen =======
-local espEnabled, nameEnabled, flying, spectateMode = false, false, false, false
-local flyVelocity, flySpeed = nil, 50
-local playerSpeed, jumpPower = 16, 50
-local nameColor = Color3.fromRGB(255,255,255)
-local hitboxColor = Color3.fromRGB(255,0,0)
-local playerListUI = nil
-local camera = workspace.CurrentCamera
-local spectateTarget = nil
-
--- ======= Hilfsfunktionen =======
-local function showNotification(title, text, duration)
-    StarterGui:SetCore("SendNotification", {Title=title, Text=text, Duration=duration or 3})
-end
-
--- ESP / Nametags
+-- ESP Funktion
 local function updateESP()
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= player and plr.Character then
-            local root = plr.Character:FindFirstChild("HumanoidRootPart")
+    for _, plr in pairs(Players:GetPlayers()) do
+        if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            local root = plr.Character.HumanoidRootPart
+            -- Hitbox
+            if espEnabled then
+                if not root:FindFirstChild("HitboxESP") then
+                    local box = Instance.new("BoxHandleAdornment")
+                    box.Name = "HitboxESP"
+                    box.Size = Vector3.new(2, 5, 1)
+                    box.Adornee = root
+                    box.AlwaysOnTop = true
+                    box.Transparency = 0.7
+                    box.Color3 = Color3.fromRGB(255,0,0)
+                    box.Parent = root
+                end
+            else
+                local box = root:FindFirstChild("HitboxESP")
+                if box then box:Destroy() end
+            end
+
+            -- Nametag
             local head = plr.Character:FindFirstChild("Head")
-            if root then
-                -- Hitbox ESP
-                if espEnabled then
-                    if not root:FindFirstChild("HitboxESP") then
-                        local box = Instance.new("BoxHandleAdornment")
-                        box.Name = "HitboxESP"
-                        box.Size = root.Size + Vector3.new(1,3,1)
-                        box.Adornee = root
-                        box.AlwaysOnTop = true
-                        box.Transparency = 0.7
-                        box.Color3 = hitboxColor
-                        box.Parent = root
+            if head then
+                if nameEnabled then
+                    if not head:FindFirstChild("NameESP") then
+                        local billboard = Instance.new("BillboardGui")
+                        billboard.Name = "NameESP"
+                        billboard.Size = UDim2.new(0, 100, 0, 30)
+                        billboard.Adornee = head
+                        billboard.AlwaysOnTop = true
+                        billboard.Parent = head
+
+                        local label = Instance.new("TextLabel")
+                        label.Size = UDim2.new(1,0,1,0)
+                        label.BackgroundTransparency = 1
+                        label.Text = plr.Name
+                        label.Font = Enum.Font.GothamBold
+                        label.TextScaled = true
+                        label.TextStrokeTransparency = 0
+                        label.TextStrokeColor3 = Color3.fromRGB(0,0,0)
+                        label.TextColor3 = Color3.fromRGB(255,255,255)
+                        label.Parent = billboard
                     end
                 else
-                    local box = root:FindFirstChild("HitboxESP")
-                    if box then box:Destroy() end
-                end
-
-                -- Nametag
-                if head then
-                    if nameEnabled then
-                        if not head:FindFirstChild("NameESP") then
-                            local billboard = Instance.new("BillboardGui")
-                            billboard.Name = "NameESP"
-                            billboard.Size = UDim2.new(0, 200, 0, 50)
-                            billboard.Adornee = head
-                            billboard.AlwaysOnTop = true
-                            billboard.Parent = head
-
-                            local label = Instance.new("TextLabel")
-                            label.Size = UDim2.new(1,0,1,0)
-                            label.BackgroundTransparency = 1
-                            label.Text = plr.Name
-                            label.Font = Enum.Font.GothamBold
-                            label.TextScaled = true
-                            label.TextStrokeTransparency = 0
-                            label.TextStrokeColor3 = Color3.fromRGB(0,0,0)
-                            label.TextColor3 = nameColor
-                            label.Parent = billboard
-                        end
-                    else
-                        local nesp = head:FindFirstChild("NameESP")
-                        if nesp then nesp:Destroy() end
-                    end
+                    local nesp = head:FindFirstChild("NameESP")
+                    if nesp then nesp:Destroy() end
                 end
             end
         end
     end
 end
 
--- Fly
+-- Fly Funktion
 local function toggleFly(state)
     if state and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
         flyVelocity = Instance.new("BodyVelocity")
@@ -163,53 +79,7 @@ local function toggleFly(state)
     end
 end
 
--- Player List
-local function updatePlayerList()
-    if not playerListUI then return end
-    playerListUI:ClearAllChildren()
-    local yPos = 5
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= player then
-            local btn = Instance.new("TextButton")
-            btn.Size = UDim2.new(1,-10,0,30)
-            btn.Position = UDim2.new(0,5,0,yPos)
-            btn.BackgroundColor3 = Color3.fromRGB(50,50,50)
-            btn.BorderSizePixel = 0
-            btn.Text = plr.Name
-            btn.Font = Enum.Font.Gotham
-            btn.TextSize = 14
-            btn.TextColor3 = Color3.fromRGB(255,255,255)
-            btn.Parent = playerListUI
-            yPos += 35
-
-            btn.MouseButton1Click:Connect(function()
-                if spectateMode then
-                    spectateTarget = plr
-                    camera.CameraType = Enum.CameraType.Custom
-                    camera.CameraSubject = plr.Character:FindFirstChild("Humanoid")
-                else
-                    if player.Character and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-                        player.Character.HumanoidRootPart.CFrame = plr.Character.HumanoidRootPart.CFrame + Vector3.new(0,3,0)
-                        showNotification("Teleport","Zu "..plr.Name.." teleportiert!",2)
-                    end
-                end
-            end)
-        end
-    end
-end
-
-Players.PlayerAdded:Connect(updatePlayerList)
-Players.PlayerRemoving:Connect(updatePlayerList)
-
--- Player List Frame
-playerListUI = Instance.new("Frame")
-playerListUI.Size = UDim2.new(1,-10,1,-10)
-playerListUI.Position = UDim2.new(0,5,0,5)
-playerListUI.BackgroundTransparency = 1
-playerListUI.Parent = contentArea
-updatePlayerList()
-
--- WalkSpeed / JumpPower
+-- WalkSpeed / JumpPower Funktion
 local function applyPlayerSpeed()
     if player.Character and player.Character:FindFirstChild("Humanoid") then
         player.Character.Humanoid.WalkSpeed = playerSpeed
@@ -217,19 +87,7 @@ local function applyPlayerSpeed()
     end
 end
 
--- Spectate Mode Toggle
-local function toggleSpectate()
-    spectateMode = not spectateMode
-    if spectateMode then
-        showNotification("Spectate","Wähle einen Spieler zum spectaten!",3)
-    else
-        camera.CameraType = Enum.CameraType.Custom
-        camera.CameraSubject = player.Character:FindFirstChild("Humanoid")
-        spectateTarget = nil
-    end
-end
-
--- RunService Loop
+-- RenderLoop
 RunService.RenderStepped:Connect(function()
     updateESP()
     applyPlayerSpeed()
@@ -237,10 +95,10 @@ RunService.RenderStepped:Connect(function()
         local hrp = player.Character:FindFirstChild("HumanoidRootPart")
         if hrp then
             local move = Vector3.zero
-            if UserInput:IsKeyDown(Enum.KeyCode.W) then move += camera.CFrame.LookVector end
-            if UserInput:IsKeyDown(Enum.KeyCode.S) then move -= camera.CFrame.LookVector end
-            if UserInput:IsKeyDown(Enum.KeyCode.A) then move -= camera.CFrame.RightVector end
-            if UserInput:IsKeyDown(Enum.KeyCode.D) then move += camera.CFrame.RightVector end
+            if UserInput:IsKeyDown(Enum.KeyCode.W) then move += workspace.CurrentCamera.CFrame.LookVector end
+            if UserInput:IsKeyDown(Enum.KeyCode.S) then move -= workspace.CurrentCamera.CFrame.LookVector end
+            if UserInput:IsKeyDown(Enum.KeyCode.A) then move -= workspace.CurrentCamera.CFrame.RightVector end
+            if UserInput:IsKeyDown(Enum.KeyCode.D) then move += workspace.CurrentCamera.CFrame.RightVector end
             if UserInput:IsKeyDown(Enum.KeyCode.Space) then move += Vector3.new(0,1,0) end
             if UserInput:IsKeyDown(Enum.KeyCode.LeftControl) then move -= Vector3.new(0,1,0) end
             if move.Magnitude > 0 then
@@ -252,26 +110,17 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- ======= Sidebar Buttons =======
-local function createButton(text, posY, callback)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0,130,0,30)
-    btn.Position = UDim2.new(0,10,0,posY)
-    btn.BackgroundColor3 = Color3.fromRGB(60,60,60)
-    btn.BorderSizePixel = 0
-    btn.Text = text
-    btn.Font = Enum.Font.Gotham
-    btn.TextSize = 14
-    btn.TextColor3 = Color3.fromRGB(255,255,255)
-    btn.Parent = sidebar
-    btn.MouseButton1Click:Connect(callback)
-end
-
-createButton("Toggle ESP",50,function() espEnabled = not espEnabled; updateESP() end)
-createButton("Toggle Names",90,function() nameEnabled = not nameEnabled; updateESP() end)
-createButton("Toggle Fly",130,function() toggleFly(not flying) end)
-createButton("Spectate",170,function() toggleSpectate() end)
-createButton("WalkSpeed+5",210,function() playerSpeed +=5; applyPlayerSpeed() end)
-createButton("WalkSpeed-5",250,function() playerSpeed = math.max(16, playerSpeed-5); applyPlayerSpeed() end)
-createButton("Jump+5",290,function() jumpPower +=5; applyPlayerSpeed() end)
-createButton("Jump-5",330,function() jumpPower = math.max(50, jumpPower-5); applyPlayerSpeed() end)
+-- Test Buttons in Explorer (nicht GUI)
+UserInput.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.F then
+        espEnabled = not espEnabled
+    elseif input.KeyCode == Enum.KeyCode.N then
+        nameEnabled = not nameEnabled
+    elseif input.KeyCode == Enum.KeyCode.G then
+        toggleFly(not flying)
+    elseif input.KeyCode == Enum.KeyCode.T then
+        playerSpeed +=5
+        jumpPower +=5
+    end
+end)
