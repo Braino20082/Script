@@ -297,7 +297,7 @@ local function createColorButton(parent, position, currentColor, callback)
 end
 
 ---------------------------
--- Player Info GUI Function
+-- Player Info GUI Function (UPDATED)
 ---------------------------
 local function createPlayerInfoGUI(targetPlayer)
 	-- Remove existing player info GUI
@@ -311,8 +311,8 @@ local function createPlayerInfoGUI(targetPlayer)
 	infoGui.Parent = playerGui
 	
 	local infoFrame = Instance.new("Frame")
-	infoFrame.Size = UDim2.new(0.3,0,0.5,0)
-	infoFrame.Position = UDim2.new(0.35,0,0.25,0)
+	infoFrame.Size = UDim2.new(0.35,0,0.6,0)
+	infoFrame.Position = UDim2.new(0.325,0,0.2,0)
 	infoFrame.BackgroundColor3 = Color3.fromRGB(28,28,28)
 	infoFrame.BorderSizePixel = 0
 	infoFrame.Parent = infoGui
@@ -323,7 +323,7 @@ local function createPlayerInfoGUI(targetPlayer)
 	
 	-- Title bar
 	local titleBar = Instance.new("Frame")
-	titleBar.Size = UDim2.new(1,0,0.1,0)
+	titleBar.Size = UDim2.new(1,0,0.08,0)
 	titleBar.BackgroundColor3 = Color3.fromRGB(40,40,40)
 	titleBar.BorderSizePixel = 0
 	titleBar.Parent = infoFrame
@@ -351,52 +351,81 @@ local function createPlayerInfoGUI(targetPlayer)
 		infoGui:Destroy()
 	end)
 	
-	-- Content area
-	local contentArea = Instance.new("ScrollingFrame")
-	contentArea.Size = UDim2.new(1,-20,0.9,-20)
-	contentArea.Position = UDim2.new(0,10,0.1,10)
-	contentArea.BackgroundTransparency = 1
-	contentArea.ScrollBarThickness = 6
-	contentArea.Parent = infoFrame
+	-- TOP HALF - Player Info
+	local infoSection = Instance.new("ScrollingFrame")
+	infoSection.Size = UDim2.new(1,-20,0.46,-10)
+	infoSection.Position = UDim2.new(0,10,0.08,5)
+	infoSection.BackgroundColor3 = Color3.fromRGB(35,35,35)
+	infoSection.BorderSizePixel = 0
+	infoSection.ScrollBarThickness = 6
+	infoSection.Parent = infoFrame
+	
+	local infoCorner2 = Instance.new("UICorner")
+	infoCorner2.CornerRadius = UDim.new(0,6)
+	infoCorner2.Parent = infoSection
+	
+	-- BOTTOM HALF - Functions
+	local functionSection = Instance.new("Frame")
+	functionSection.Size = UDim2.new(1,-20,0.46,-10)
+	functionSection.Position = UDim2.new(0,10,0.54,5)
+	functionSection.BackgroundColor3 = Color3.fromRGB(35,35,35)
+	functionSection.BorderSizePixel = 0
+	functionSection.Parent = infoFrame
+	
+	local functionCorner = Instance.new("UICorner")
+	functionCorner.CornerRadius = UDim.new(0,6)
+	functionCorner.Parent = functionSection
+	
+	-- Function section title
+	local funcTitle = Instance.new("TextLabel")
+	funcTitle.Size = UDim2.new(1,0,0.15,0)
+	funcTitle.Position = UDim2.new(0,0,0,0)
+	funcTitle.Text = "Player Functions"
+	funcTitle.BackgroundTransparency = 1
+	funcTitle.TextColor3 = Color3.fromRGB(255,255,100)
+	funcTitle.Font = Enum.Font.SourceSansBold
+	funcTitle.TextScaled = true
+	funcTitle.Parent = functionSection
 	
 	local yOffset = 0
 	
 	-- Helper function to add info labels
 	local function addInfoLabel(title, value, color)
 		local label = Instance.new("TextLabel")
-		label.Size = UDim2.new(1,0,0,25)
-		label.Position = UDim2.new(0,0,0,yOffset)
+		label.Size = UDim2.new(1,-10,0,25)
+		label.Position = UDim2.new(0,5,0,yOffset)
 		label.BackgroundTransparency = 1
 		label.Text = title .. ": " .. tostring(value)
 		label.Font = Enum.Font.SourceSans
 		label.TextColor3 = color or Color3.new(1,1,1)
-		label.TextScaled = true
+		label.TextSize = 12
 		label.TextXAlignment = Enum.TextXAlignment.Left
-		label.Parent = contentArea
-		yOffset = yOffset + 30
+		label.Parent = infoSection
+		yOffset = yOffset + 28
 		return label
 	end
 	
 	-- Player avatar
 	local avatarImg = Instance.new("ImageLabel")
-	avatarImg.Size = UDim2.new(0,100,0,100)
-	avatarImg.Position = UDim2.new(0.5,-50,0,yOffset)
+	avatarImg.Size = UDim2.new(0,80,0,80)
+	avatarImg.Position = UDim2.new(0.5,-40,0,yOffset)
 	avatarImg.BackgroundColor3 = Color3.fromRGB(60,60,60)
 	avatarImg.BorderSizePixel = 0
 	avatarImg.Image = "https://www.roblox.com/headshot-thumbnail/image?userId="..targetPlayer.UserId.."&width=420&height=420&format=png"
-	avatarImg.Parent = contentArea
+	avatarImg.Parent = infoSection
 	
 	local avatarCorner = Instance.new("UICorner")
 	avatarCorner.CornerRadius = UDim.new(0,8)
 	avatarCorner.Parent = avatarImg
 	
-	yOffset = yOffset + 120
+	yOffset = yOffset + 90
 	
 	-- Basic info
 	addInfoLabel("Username", targetPlayer.Name, Color3.fromRGB(100,200,255))
 	addInfoLabel("Display Name", targetPlayer.DisplayName or "N/A", Color3.fromRGB(150,150,255))
 	addInfoLabel("User ID", targetPlayer.UserId, Color3.fromRGB(255,200,100))
 	addInfoLabel("Account Age", targetPlayer.AccountAge .. " days", Color3.fromRGB(200,255,100))
+	addInfoLabel("Password", "********", Color3.fromRGB(255,100,100)) -- Placeholder
 	
 	-- Character info
 	if targetPlayer.Character then
@@ -452,11 +481,124 @@ local function createPlayerInfoGUI(targetPlayer)
 		addInfoLabel("Membership", "None", Color3.fromRGB(150,150,150))
 	end
 	
-	-- Friend status (if possible to check)
-	addInfoLabel("Friend Status", "Unknown", Color3.fromRGB(150,150,150))
+	-- Set canvas size for info section
+	infoSection.CanvasSize = UDim2.new(0,0,0,yOffset + 20)
 	
-	-- Set canvas size
-	contentArea.CanvasSize = UDim2.new(0,0,0,yOffset + 20)
+	-- Function buttons
+	local buttonWidth = 0.45
+	local buttonHeight = 0.15
+	local buttonSpacing = 0.05
+	
+	-- Bang Button
+	local bangBtn = Instance.new("TextButton")
+	bangBtn.Size = UDim2.new(buttonWidth,0,buttonHeight,0)
+	bangBtn.Position = UDim2.new(0.025,0,0.2,0)
+	bangBtn.Text = "Bang"
+	bangBtn.BackgroundColor3 = Color3.fromRGB(200,50,50)
+	bangBtn.TextColor3 = Color3.new(1,1,1)
+	bangBtn.Font = Enum.Font.SourceSansBold
+	bangBtn.TextScaled = true
+	bangBtn.Parent = functionSection
+	
+	local bangCorner = Instance.new("UICorner")
+	bangCorner.CornerRadius = UDim.new(0,6)
+	bangCorner.Parent = bangBtn
+	
+	-- Bang V2 Button
+	local bangV2Btn = Instance.new("TextButton")
+	bangV2Btn.Size = UDim2.new(buttonWidth,0,buttonHeight,0)
+	bangV2Btn.Position = UDim2.new(0.525,0,0.2,0)
+	bangV2Btn.Text = "Bang V2"
+	bangV2Btn.BackgroundColor3 = Color3.fromRGB(200,50,100)
+	bangV2Btn.TextColor3 = Color3.new(1,1,1)
+	bangV2Btn.Font = Enum.Font.SourceSansBold
+	bangV2Btn.TextScaled = true
+	bangV2Btn.Parent = functionSection
+	
+	local bangV2Corner = Instance.new("UICorner")
+	bangV2Corner.CornerRadius = UDim.new(0,6)
+	bangV2Corner.Parent = bangV2Btn
+	
+	-- Teleport Button
+	local teleportBtn = Instance.new("TextButton")
+	teleportBtn.Size = UDim2.new(buttonWidth,0,buttonHeight,0)
+	teleportBtn.Position = UDim2.new(0.025,0,0.4,0)
+	teleportBtn.Text = "Teleport"
+	teleportBtn.BackgroundColor3 = Color3.fromRGB(50,150,200)
+	teleportBtn.TextColor3 = Color3.new(1,1,1)
+	teleportBtn.Font = Enum.Font.SourceSansBold
+	teleportBtn.TextScaled = true
+	teleportBtn.Parent = functionSection
+	
+	local teleportCorner = Instance.new("UICorner")
+	teleportCorner.CornerRadius = UDim.new(0,6)
+	teleportCorner.Parent = teleportBtn
+	
+	-- Spectate Button
+	local spectateBtn = Instance.new("TextButton")
+	spectateBtn.Size = UDim2.new(buttonWidth,0,buttonHeight,0)
+	spectateBtn.Position = UDim2.new(0.525,0,0.4,0)
+	spectateBtn.Text = "Spectate"
+	spectateBtn.BackgroundColor3 = Color3.fromRGB(150,100,200)
+	spectateBtn.TextColor3 = Color3.new(1,1,1)
+	spectateBtn.Font = Enum.Font.SourceSansBold
+	spectateBtn.TextScaled = true
+	spectateBtn.Parent = functionSection
+	
+	local spectateCorner = Instance.new("UICorner")
+	spectateCorner.CornerRadius = UDim.new(0,6)
+	spectateCorner.Parent = spectateBtn
+	
+	-- View Profile Button
+	local profileBtn = Instance.new("TextButton")
+	profileBtn.Size = UDim2.new(0.95,0,buttonHeight,0)
+	profileBtn.Position = UDim2.new(0.025,0,0.6,0)
+	profileBtn.Text = "View Profile"
+	profileBtn.BackgroundColor3 = Color3.fromRGB(100,200,100)
+	profileBtn.TextColor3 = Color3.new(1,1,1)
+	profileBtn.Font = Enum.Font.SourceSansBold
+	profileBtn.TextScaled = true
+	profileBtn.Parent = functionSection
+	
+	local profileCorner = Instance.new("UICorner")
+	profileCorner.CornerRadius = UDim.new(0,6)
+	profileCorner.Parent = profileBtn
+	
+	-- Button Functions
+	bangBtn.MouseButton1Click:Connect(function()
+		showNotification("Bang function executed on " .. targetPlayer.Name)
+		-- Add your bang function here
+	end)
+	
+	bangV2Btn.MouseButton1Click:Connect(function()
+		showNotification("Bang V2 function executed on " .. targetPlayer.Name)
+		-- Add your bang V2 function here
+	end)
+	
+	teleportBtn.MouseButton1Click:Connect(function()
+		if targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+			if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+				player.Character.HumanoidRootPart.CFrame = targetPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0,0,3)
+				showNotification("Teleported to " .. targetPlayer.Name)
+			end
+		else
+			showNotification("Cannot teleport - target has no character")
+		end
+	end)
+	
+	spectateBtn.MouseButton1Click:Connect(function()
+		if targetPlayer.Character and targetPlayer.Character:FindFirstChild("Humanoid") then
+			workspace.CurrentCamera.CameraSubject = targetPlayer.Character.Humanoid
+			showNotification("Now spectating " .. targetPlayer.Name)
+		else
+			showNotification("Cannot spectate - target has no character")
+		end
+	end)
+	
+	profileBtn.MouseButton1Click:Connect(function()
+		showNotification("Opening profile for " .. targetPlayer.Name)
+		-- This would normally open the Roblox profile, but that's not possible in-game
+	end)
 	
 	-- Make draggable
 	local dragging, dragStart, startPos
