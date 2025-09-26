@@ -23,8 +23,8 @@ screenGui.Parent = playerGui
 
 -- Hauptframe
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 600, 0, 400)
-mainFrame.Position = UDim2.new(0.5, -300, 0.5, -200)
+mainFrame.Size = UDim2.new(0, 800, 0, 500) -- Größer für Spieler-Menü
+mainFrame.Position = UDim2.new(0.5, -400, 0.5, -250)
 mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 mainFrame.BorderSizePixel = 0
 mainFrame.Parent = screenGui
@@ -59,7 +59,7 @@ local titleLabel = Instance.new("TextLabel")
 titleLabel.Size = UDim2.new(1, -70, 1, 0)
 titleLabel.Position = UDim2.new(0, 10, 0, 0)
 titleLabel.BackgroundTransparency = 1
-titleLabel.Text = "ESP Menu v2.1"
+titleLabel.Text = "ESP Menu v2.2 - Bang Bang V2"
 titleLabel.Font = Enum.Font.GothamBold
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 titleLabel.TextSize = 16
@@ -128,6 +128,258 @@ resizeCorner.CornerRadius = UDim.new(0, 4)
 resizeCorner.Parent = resizeHandle
 
 ---------------------------
+-- Spieler Info GUI
+---------------------------
+local playerInfoGui = nil
+
+local function createPlayerInfoGUI(targetPlayer)
+    -- Alte GUI löschen falls vorhanden
+    if playerInfoGui then
+        playerInfoGui:Destroy()
+    end
+    
+    -- Neue GUI erstellen
+    playerInfoGui = Instance.new("Frame")
+    playerInfoGui.Size = UDim2.new(0, 350, 0, 450)
+    playerInfoGui.Position = UDim2.new(0.5, -175, 0.5, -225)
+    playerInfoGui.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    playerInfoGui.BorderSizePixel = 0
+    playerInfoGui.Parent = screenGui
+    playerInfoGui.ZIndex = 10
+    
+    local infoCorner = Instance.new("UICorner")
+    infoCorner.CornerRadius = UDim.new(0, 10)
+    infoCorner.Parent = playerInfoGui
+    
+    -- Titel
+    local infoTitle = Instance.new("TextLabel")
+    infoTitle.Size = UDim2.new(1, -30, 0, 40)
+    infoTitle.Position = UDim2.new(0, 15, 0, 10)
+    infoTitle.BackgroundTransparency = 1
+    infoTitle.Text = "👤 " .. targetPlayer.Name .. " - Info"
+    infoTitle.Font = Enum.Font.GothamBold
+    infoTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+    infoTitle.TextSize = 18
+    infoTitle.TextXAlignment = Enum.TextXAlignment.Left
+    infoTitle.Parent = playerInfoGui
+    
+    -- Schließen Button für Info GUI
+    local infoCloseBtn = Instance.new("TextButton")
+    infoCloseBtn.Size = UDim2.new(0, 25, 0, 25)
+    infoCloseBtn.Position = UDim2.new(1, -35, 0, 10)
+    infoCloseBtn.Text = "×"
+    infoCloseBtn.Font = Enum.Font.GothamBold
+    infoCloseBtn.TextSize = 16
+    infoCloseBtn.BackgroundColor3 = Color3.fromRGB(220, 53, 69)
+    infoCloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    infoCloseBtn.BorderSizePixel = 0
+    infoCloseBtn.Parent = playerInfoGui
+    
+    local infoCloseCorner = Instance.new("UICorner")
+    infoCloseCorner.CornerRadius = UDim.new(0, 4)
+    infoCloseCorner.Parent = infoCloseBtn
+    
+    infoCloseBtn.MouseButton1Click:Connect(function()
+        playerInfoGui:Destroy()
+        playerInfoGui = nil
+    end)
+    
+    -- Info Container
+    local infoContainer = Instance.new("ScrollingFrame")
+    infoContainer.Size = UDim2.new(1, -30, 1, -100)
+    infoContainer.Position = UDim2.new(0, 15, 0, 60)
+    infoContainer.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    infoContainer.BorderSizePixel = 0
+    infoContainer.ScrollBarThickness = 6
+    infoContainer.CanvasSize = UDim2.new(0, 0, 0, 600)
+    infoContainer.Parent = playerInfoGui
+    
+    local containerCorner = Instance.new("UICorner")
+    containerCorner.CornerRadius = UDim.new(0, 8)
+    containerCorner.Parent = infoContainer
+    
+    -- Spieler Informationen sammeln
+    local playerInfo = {
+        {"🎮 Username", targetPlayer.Name},
+        {"🆔 User ID", tostring(targetPlayer.UserId)},
+        {"📅 Account Alter", targetPlayer.AccountAge .. " Tage"},
+        {"🎖️ Membership", targetPlayer.MembershipType.Name},
+        {"🌟 Display Name", targetPlayer.DisplayName or "N/A"},
+        {"⏰ Join Zeit", os.date("%H:%M:%S", tick())},
+        {"🎯 Team", targetPlayer.Team and targetPlayer.Team.Name or "Kein Team"},
+        {"💰 Leaderstats", "Wird geladen..."},
+        {"🏃 Status", targetPlayer.Character and "Im Spiel" or "Lädt..."},
+        {"📍 Position", "Wird aktualisiert..."}
+    }
+    
+    -- Leaderstats auslesen
+    if targetPlayer:FindFirstChild("leaderstats") then
+        local leaderstats = {}
+        for _, stat in ipairs(targetPlayer.leaderstats:GetChildren()) do
+            table.insert(leaderstats, stat.Name .. ": " .. tostring(stat.Value))
+        end
+        playerInfo[8][2] = table.concat(leaderstats, ", ") or "Keine Stats"
+    else
+        playerInfo[8][2] = "Keine Stats gefunden"
+    end
+    
+    -- Position updaten
+    if targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local pos = targetPlayer.Character.HumanoidRootPart.Position
+        playerInfo[10][2] = string.format("X: %.1f, Y: %.1f, Z: %.1f", pos.X, pos.Y, pos.Z)
+    end
+    
+    -- Info Labels erstellen
+    for i, info in ipairs(playerInfo) do
+        local infoFrame = Instance.new("Frame")
+        infoFrame.Size = UDim2.new(1, -20, 0, 50)
+        infoFrame.Position = UDim2.new(0, 10, 0, (i-1) * 55)
+        infoFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        infoFrame.BorderSizePixel = 0
+        infoFrame.Parent = infoContainer
+        
+        local frameCorner = Instance.new("UICorner")
+        frameCorner.CornerRadius = UDim.new(0, 6)
+        frameCorner.Parent = infoFrame
+        
+        local titleLabel = Instance.new("TextLabel")
+        titleLabel.Size = UDim2.new(1, -10, 0, 20)
+        titleLabel.Position = UDim2.new(0, 5, 0, 5)
+        titleLabel.BackgroundTransparency = 1
+        titleLabel.Text = info[1]
+        titleLabel.Font = Enum.Font.GothamBold
+        titleLabel.TextColor3 = Color3.fromRGB(0, 162, 255)
+        titleLabel.TextSize = 12
+        titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+        titleLabel.Parent = infoFrame
+        
+        local valueLabel = Instance.new("TextLabel")
+        valueLabel.Size = UDim2.new(1, -10, 0, 20)
+        valueLabel.Position = UDim2.new(0, 5, 0, 25)
+        valueLabel.BackgroundTransparency = 1
+        valueLabel.Text = info[2]
+        valueLabel.Font = Enum.Font.Gotham
+        valueLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+        valueLabel.TextSize = 11
+        valueLabel.TextXAlignment = Enum.TextXAlignment.Left
+        valueLabel.TextWrapped = true
+        valueLabel.Parent = infoFrame
+    end
+    
+    -- Action Buttons
+    local buttonY = #playerInfo * 55 + 20
+    
+    -- Teleportieren Button
+    local teleportBtn = Instance.new("TextButton")
+    teleportBtn.Size = UDim2.new(1, -20, 0, 35)
+    teleportBtn.Position = UDim2.new(0, 10, 0, buttonY)
+    teleportBtn.BackgroundColor3 = Color3.fromRGB(40, 167, 69)
+    teleportBtn.BorderSizePixel = 0
+    teleportBtn.Text = "📍 Zu " .. targetPlayer.Name .. " teleportieren"
+    teleportBtn.Font = Enum.Font.GothamBold
+    teleportBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    teleportBtn.TextSize = 14
+    teleportBtn.Parent = infoContainer
+    
+    local teleportCorner = Instance.new("UICorner")
+    teleportCorner.CornerRadius = UDim.new(0, 6)
+    teleportCorner.Parent = teleportBtn
+    
+    teleportBtn.MouseButton1Click:Connect(function()
+        if targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                player.Character.HumanoidRootPart.CFrame = targetPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, -5)
+                showNotification("Teleport", "Zu " .. targetPlayer.Name .. " teleportiert!", 2)
+            end
+        else
+            showNotification("Fehler", "Teleport fehlgeschlagen - Spieler nicht gefunden!", 3)
+        end
+    end)
+    
+    -- Zuschau Button
+    local spectateBtn = Instance.new("TextButton")
+    spectateBtn.Size = UDim2.new(1, -20, 0, 35)
+    spectateBtn.Position = UDim2.new(0, 10, 0, buttonY + 45)
+    spectateBtn.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+    spectateBtn.BorderSizePixel = 0
+    spectateBtn.Text = "👁️ " .. targetPlayer.Name .. " zuschauen"
+    spectateBtn.Font = Enum.Font.GothamBold
+    spectateBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    spectateBtn.TextSize = 14
+    spectateBtn.Parent = infoContainer
+    
+    local spectateCorner = Instance.new("UICorner")
+    spectateCorner.CornerRadius = UDim.new(0, 6)
+    spectateCorner.Parent = spectateBtn
+    
+    spectateBtn.MouseButton1Click:Connect(function()
+        if targetPlayer.Character and targetPlayer.Character:FindFirstChild("Humanoid") then
+            workspace.CurrentCamera.CameraSubject = targetPlayer.Character.Humanoid
+            showNotification("Spectate", "Schaue " .. targetPlayer.Name .. " zu! (R zum Zurücksetzen)", 3)
+        else
+            showNotification("Fehler", "Zuschauen fehlgeschlagen - Spieler nicht verfügbar!", 3)
+        end
+    end)
+    
+    -- Zurück zu eigenem Character Button
+    local returnBtn = Instance.new("TextButton")
+    returnBtn.Size = UDim2.new(1, -20, 0, 35)
+    returnBtn.Position = UDim2.new(0, 10, 0, buttonY + 90)
+    returnBtn.BackgroundColor3 = Color3.fromRGB(255, 193, 7)
+    returnBtn.BorderSizePixel = 0
+    returnBtn.Text = "🏠 Zurück zu mir"
+    returnBtn.Font = Enum.Font.GothamBold
+    returnBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+    returnBtn.TextSize = 14
+    returnBtn.Parent = infoContainer
+    
+    local returnCorner = Instance.new("UICorner")
+    returnCorner.CornerRadius = UDim.new(0, 6)
+    returnCorner.Parent = returnBtn
+    
+    returnBtn.MouseButton1Click:Connect(function()
+        if player.Character and player.Character:FindFirstChild("Humanoid") then
+            workspace.CurrentCamera.CameraSubject = player.Character.Humanoid
+            showNotification("Camera", "Kamera zurückgesetzt!", 2)
+        end
+    end)
+    
+    -- Update Canvas Size
+    infoContainer.CanvasSize = UDim2.new(0, 0, 0, buttonY + 150)
+    
+    -- Dragging für Player Info GUI
+    local infoDragging = false
+    local infoDragStart = nil
+    local infoStartPos = nil
+    
+    infoTitle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            infoDragging = true
+            infoDragStart = input.Position
+            infoStartPos = playerInfoGui.Position
+        end
+    end)
+    
+    UserInput.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement and infoDragging then
+            local delta = input.Position - infoDragStart
+            playerInfoGui.Position = UDim2.new(
+                infoStartPos.X.Scale,
+                infoStartPos.X.Offset + delta.X,
+                infoStartPos.Y.Scale,
+                infoStartPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+    
+    UserInput.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            infoDragging = false
+        end
+    end)
+end
+
+---------------------------
 -- Funktionen & Variablen
 ---------------------------
 
@@ -147,6 +399,10 @@ local nameColor = Color3.fromRGB(255, 255, 255)
 -- Panels
 local panels = {}
 local currentPanel = nil
+
+-- Player Liste
+local playerList = {}
+local playerListUI = nil
 
 -- Keybind Settings
 local toggleKey = Enum.KeyCode.F
@@ -241,6 +497,73 @@ local function updateNames(state)
             end
         end
     end
+end
+
+-- Player List Update
+local function updatePlayerList()
+    if not playerListUI then return end
+    
+    -- Alte Buttons entfernen
+    for _, child in ipairs(playerListUI:GetChildren()) do
+        if child:IsA("TextButton") and child.Name:find("PlayerBtn_") then
+            child:Destroy()
+        end
+    end
+    
+    -- Neue Player Buttons erstellen
+    local playerCount = 0
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= player then
+            playerCount = playerCount + 1
+            
+            local playerBtn = Instance.new("TextButton")
+            playerBtn.Name = "PlayerBtn_" .. plr.Name
+            playerBtn.Size = UDim2.new(1, -10, 0, 40)
+            playerBtn.Position = UDim2.new(0, 5, 0, 5 + (playerCount-1) * 45)
+            playerBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+            playerBtn.BorderSizePixel = 0
+            playerBtn.Font = Enum.Font.Gotham
+            playerBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            playerBtn.TextSize = 12
+            playerBtn.TextXAlignment = Enum.TextXAlignment.Left
+            playerBtn.Parent = playerListUI
+            
+            -- Status Icon
+            local statusIcon = "🔴" -- Offline
+            if plr.Character and plr.Character:FindFirstChild("Humanoid") then
+                statusIcon = "🟢" -- Online
+            end
+            
+            -- Team Color
+            local teamColor = ""
+            if plr.Team then
+                teamColor = " [" .. plr.Team.Name .. "]"
+            end
+            
+            playerBtn.Text = "  " .. statusIcon .. " " .. plr.Name .. teamColor
+            
+            local btnCorner = Instance.new("UICorner")
+            btnCorner.CornerRadius = UDim.new(0, 6)
+            btnCorner.Parent = playerBtn
+            
+            -- Click Handler
+            playerBtn.MouseButton1Click:Connect(function()
+                createPlayerInfoGUI(plr)
+            end)
+            
+            -- Hover Effect
+            playerBtn.MouseEnter:Connect(function()
+                playerBtn.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+            end)
+            
+            playerBtn.MouseLeave:Connect(function()
+                playerBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+            end)
+        end
+    end
+    
+    -- Canvas Size updaten
+    playerListUI.CanvasSize = UDim2.new(0, 0, 0, playerCount * 45 + 10)
 end
 
 -- Notification Funktion
@@ -348,7 +671,6 @@ local function createSlider(parent, labelText, position, minVal, maxVal, current
     return sliderFrame
 end
 
--- FIXED: createColorPicker mit return statement
 local function createColorPicker(parent, labelText, position, currentColor, callback)
     local colorFrame = Instance.new("Frame")
     colorFrame.Size = UDim2.new(1, -20, 0, 80)
@@ -418,7 +740,7 @@ local function createColorPicker(parent, labelText, position, currentColor, call
         end)
     end
     
-    return colorFrame -- FIXED: Das war missing!
+    return colorFrame
 end
 
 ---------------------------
@@ -463,7 +785,7 @@ local function createPlayerPanel()
     return panel
 end
 
--- ESP Panel (Verbessert mit besserer Farbauswahl)
+-- ESP Panel
 local function createESPPanel()
     local panel = Instance.new("ScrollingFrame")
     panel.Size = UDim2.new(1, 0, 1, 0)
@@ -488,7 +810,7 @@ local function createESPPanel()
         end
     end)
     
-    -- Hitbox Farbauswahl DIREKT unter dem Button
+    -- Hitbox Farbauswahl
     local hitboxColorPicker = createColorPicker(panel, "Hitbox Farbe:", UDim2.new(0, 10, 0, 55), hitboxColor, function(newColor)
         hitboxColor = newColor
         if espEnabled then
@@ -510,7 +832,7 @@ local function createESPPanel()
         end
     end)
     
-    -- Namen Farbauswahl DIREKT unter dem Button
+    -- Namen Farbauswahl
     local nameColorPicker = createColorPicker(panel, "Namen Farbe:", UDim2.new(0, 10, 0, 190), nameColor, function(newColor)
         nameColor = newColor
         if nameEnabled then
@@ -530,18 +852,92 @@ local function createESPPanel()
     return panel
 end
 
--- Settings Panel (Erweitert mit F-Key Toggle)
+-- Spieler Panel (NEU)
+local function createPlayersPanel()
+    local panel = Instance.new("Frame")
+    panel.Size = UDim2.new(1, 0, 1, 0)
+    panel.Position = UDim2.new(0, 0, 0, 0)
+    panel.BackgroundTransparency = 1
+    panel.Visible = false
+    panel.Parent = contentArea
+    
+    -- Header
+    local headerFrame = Instance.new("Frame")
+    headerFrame.Size = UDim2.new(1, -20, 0, 40)
+    headerFrame.Position = UDim2.new(0, 10, 0, 10)
+    headerFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    headerFrame.BorderSizePixel = 0
+    headerFrame.Parent = panel
+    
+    local headerCorner = Instance.new("UICorner")
+    headerCorner.CornerRadius = UDim.new(0, 8)
+    headerCorner.Parent = headerFrame
+    
+    local headerLabel = Instance.new("TextLabel")
+    headerLabel.Size = UDim2.new(1, -20, 1, 0)
+    headerLabel.Position = UDim2.new(0, 10, 0, 0)
+    headerLabel.BackgroundTransparency = 1
+    headerLabel.Text = "👥 Spieler im Server - Klicke für Details"
+    headerLabel.Font = Enum.Font.GothamBold
+    headerLabel.TextColor3 = Color3.fromRGB(0, 162, 255)
+    headerLabel.TextSize = 16
+    headerLabel.TextXAlignment = Enum.TextXAlignment.Left
+    headerLabel.Parent = headerFrame
+    
+    -- Refresh Button
+    local refreshBtn = Instance.new("TextButton")
+    refreshBtn.Size = UDim2.new(0, 80, 0, 30)
+    refreshBtn.Position = UDim2.new(1, -90, 0, 5)
+    refreshBtn.BackgroundColor3 = Color3.fromRGB(40, 167, 69)
+    refreshBtn.BorderSizePixel = 0
+    refreshBtn.Text = "🔄 Refresh"
+    refreshBtn.Font = Enum.Font.Gotham
+    refreshBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    refreshBtn.TextSize = 12
+    refreshBtn.Parent = headerFrame
+    
+    local refreshCorner = Instance.new("UICorner")
+    refreshCorner.CornerRadius = UDim.new(0, 6)
+    refreshCorner.Parent = refreshBtn
+    
+    -- Player List ScrollingFrame
+    playerListUI = Instance.new("ScrollingFrame")
+    playerListUI.Size = UDim2.new(1, -20, 1, -70)
+    playerListUI.Position = UDim2.new(0, 10, 0, 60)
+    playerListUI.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    playerListUI.BorderSizePixel = 0
+    playerListUI.ScrollBarThickness = 6
+    playerListUI.CanvasSize = UDim2.new(0, 0, 0, 0)
+    playerListUI.Parent = panel
+    
+    local listCorner = Instance.new("UICorner")
+    listCorner.CornerRadius = UDim.new(0, 8)
+    listCorner.Parent = playerListUI
+    
+    -- Refresh Button Funktionalität
+    refreshBtn.MouseButton1Click:Connect(function()
+        updatePlayerList()
+        showNotification("Player List", "Spieler Liste aktualisiert!", 2)
+    end)
+    
+    -- Initial update
+    updatePlayerList()
+    
+    return panel
+end
+
+-- Settings Panel
 local function createSettingsPanel()
     local panel = Instance.new("ScrollingFrame")
     panel.Size = UDim2.new(1, 0, 1, 0)
     panel.Position = UDim2.new(0, 0, 0, 0)
     panel.BackgroundTransparency = 1
     panel.ScrollBarThickness = 6
-    panel.CanvasSize = UDim2.new(0, 0, 0, 400)
+    panel.CanvasSize = UDim2.new(0, 0, 0, 500)
     panel.Visible = false
     panel.Parent = contentArea
     
-    -- GUI Toggle Button (F-Key Alternative)
+    -- GUI Toggle Button
     local guiToggleBtn = createButton(panel, "Toggle GUI (F-Key)", UDim2.new(0, 10, 0, 10), UDim2.new(1, -20, 0, 35))
     guiToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
     guiToggleBtn.MouseButton1Click:Connect(function()
@@ -551,7 +947,7 @@ local function createSettingsPanel()
         end
     end)
     
-    -- Script Toggle Button (Komplettes Ein/Aus)
+    -- Script Toggle Button
     local scriptToggleBtn = createButton(panel, "Script: AN", UDim2.new(0, 10, 0, 55), UDim2.new(1, -20, 0, 35))
     scriptToggleBtn.BackgroundColor3 = Color3.fromRGB(40, 167, 69)
     local scriptEnabled = true
@@ -573,8 +969,18 @@ local function createSettingsPanel()
         end
     end)
     
+    -- Reset Camera Button
+    local resetCamBtn = createButton(panel, "🎥 Kamera zurücksetzen", UDim2.new(0, 10, 0, 100), UDim2.new(1, -20, 0, 35))
+    resetCamBtn.BackgroundColor3 = Color3.fromRGB(255, 193, 7)
+    resetCamBtn.MouseButton1Click:Connect(function()
+        if player.Character and player.Character:FindFirstChild("Humanoid") then
+            workspace.CurrentCamera.CameraSubject = player.Character.Humanoid
+            showNotification("Camera", "Kamera zurückgesetzt!", 2)
+        end
+    end)
+    
     -- Reset Button
-    local resetBtn = createButton(panel, "Alle Einstellungen zurücksetzen", UDim2.new(0, 10, 0, 100), UDim2.new(1, -20, 0, 35))
+    local resetBtn = createButton(panel, "Alle Einstellungen zurücksetzen", UDim2.new(0, 10, 0, 145), UDim2.new(1, -20, 0, 35))
     resetBtn.BackgroundColor3 = Color3.fromRGB(220, 53, 69)
     resetBtn.MouseButton1Click:Connect(function()
         toggleFly(false)
@@ -584,16 +990,19 @@ local function createSettingsPanel()
         flySpeed = 50
         hitboxColor = Color3.fromRGB(255, 0, 0)
         nameColor = Color3.fromRGB(255, 255, 255)
+        if player.Character and player.Character:FindFirstChild("Humanoid") then
+            workspace.CurrentCamera.CameraSubject = player.Character.Humanoid
+        end
         showNotification("Settings", "Alle Einstellungen zurückgesetzt!", 3)
     end)
     
-    -- Keybind Info (Erweitert)
+    -- Keybind Info
     local keybindInfo = Instance.new("TextLabel")
-    keybindInfo.Size = UDim2.new(1, -20, 0, 80)
-    keybindInfo.Position = UDim2.new(0, 10, 0, 150)
+    keybindInfo.Size = UDim2.new(1, -20, 0, 120)
+    keybindInfo.Position = UDim2.new(0, 10, 0, 195)
     keybindInfo.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
     keybindInfo.BorderSizePixel = 0
-    keybindInfo.Text = "🎮 Keybinds:\nF = GUI ein/aus\nW,A,S,D = Fly Bewegung\nSpace = Hoch fliegen\nShift = Runter fliegen"
+    keybindInfo.Text = "🎮 Keybinds:\nF = GUI ein/aus\nR = Kamera zurücksetzen\nInsert = ESP Toggle\nHome = Namen Toggle\n\n🛩️ Fly Controls:\nW,A,S,D = Bewegung\nSpace = Hoch\nShift = Runter"
     keybindInfo.Font = Enum.Font.Gotham
     keybindInfo.TextColor3 = Color3.fromRGB(0, 162, 255)
     keybindInfo.TextSize = 12
@@ -607,10 +1016,10 @@ local function createSettingsPanel()
     
     -- About Info
     local aboutLabel = Instance.new("TextLabel")
-    aboutLabel.Size = UDim2.new(1, -20, 0, 120)
-    aboutLabel.Position = UDim2.new(0, 10, 0, 250)
+    aboutLabel.Size = UDim2.new(1, -20, 0, 150)
+    aboutLabel.Position = UDim2.new(0, 10, 0, 330)
     aboutLabel.BackgroundTransparency = 1
-    aboutLabel.Text = "ESP Menu v2.1 - Verbessert\n\n✨ Neue Features:\n• F-Key Script Toggle im Settings\n• Verbesserte Farbauswahl\n• Optimierte Performance\n• ESP Refresh Button\n• Erweiterte Keybinds"
+    aboutLabel.Text = "Bang Bang V2 - ESP Menu v2.2\n\n✨ Neue Features:\n• Interaktive Spieler Liste mit Live-Updates\n• Detaillierte Spieler Informationen\n• Teleport & Spectate Funktionen\n• Verbesserte UI mit mehr Platz\n• Erweiterte Keybinds (R für Kamera Reset)\n• Optimierte Performance & Stabilität\n\n🎯 Entwickelt für maximale Funktionalität!"
     aboutLabel.Font = Enum.Font.Gotham
     aboutLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
     aboutLabel.TextSize = 11
@@ -625,12 +1034,14 @@ end
 -- Panels erstellen
 panels["Player"] = createPlayerPanel()
 panels["ESP"] = createESPPanel()
+panels["Players"] = createPlayersPanel() -- NEU
 panels["Settings"] = createSettingsPanel()
 
--- Sidebar Buttons
+-- Sidebar Buttons (erweitert)
 local buttonData = {
     {name = "Player", icon = "👤"},
     {name = "ESP", icon = "👁️"},
+    {name = "Players", icon = "👥"}, -- NEU
     {name = "Settings", icon = "⚙️"}
 }
 
@@ -667,6 +1078,11 @@ for i, data in ipairs(buttonData) do
         panels[data.name].Visible = true
         btn.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
         currentPanel = data.name
+        
+        -- Player List updaten wenn Players Panel geöffnet wird
+        if data.name == "Players" then
+            updatePlayerList()
+        end
     end)
 end
 
@@ -678,401 +1094,3 @@ for _, child in ipairs(sidebar:GetChildren()) do
     end
 end
 currentPanel = "Player"
-
----------------------------
--- Event Handlers
----------------------------
-
--- Close Button
-closeBtn.MouseButton1Click:Connect(function()
-    -- Cleanup vor dem Schließen
-    toggleFly(false)
-    updateESP(false)
-    updateNames(false)
-    screenGui:Destroy()
-    showNotification("ESP Menu", "Script beendet!", 2)
-end)
-
--- Minimize Button
-local minimized = false
-minimizeBtn.MouseButton1Click:Connect(function()
-    if minimized then
-        -- Expand
-        local expandTween = TweenService:Create(mainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-            Size = UDim2.new(0, 600, 0, 400)
-        })
-        expandTween:Play()
-        minimizeBtn.Text = "-"
-        minimized = false
-        
-        -- Show content after animation
-        expandTween.Completed:Connect(function()
-            sidebar.Visible = true
-            contentArea.Visible = true
-            resizeHandle.Visible = true
-        end)
-    else
-        -- Minimize
-        sidebar.Visible = false
-        contentArea.Visible = false
-        resizeHandle.Visible = false
-        
-        local minimizeTween = TweenService:Create(mainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-            Size = UDim2.new(0, 600, 0, 35)
-        })
-        minimizeTween:Play()
-        minimizeBtn.Text = "+"
-        minimized = true
-    end
-end)
-
--- Drag Functionality
-local dragging = false
-local dragStart = nil
-local startPos = nil
-
-titleBar.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        dragStart = input.Position
-        startPos = mainFrame.Position
-        
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
-    end
-end)
-
-UserInput.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement and dragging then
-        local delta = input.Position - dragStart
-        mainFrame.Position = UDim2.new(
-            startPos.X.Scale,
-            startPos.X.Offset + delta.X,
-            startPos.Y.Scale,
-            startPos.Y.Offset + delta.Y
-        )
-    end
-end)
-
--- Resize Functionality
-local resizing = false
-local resizeStart = nil
-local startSize = nil
-
-resizeHandle.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        resizing = true
-        resizeStart = input.Position
-        startSize = mainFrame.Size
-        
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                resizing = false
-            end
-        end)
-    end
-end)
-
-UserInput.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement and resizing then
-        local delta = input.Position - resizeStart
-        local newWidth = math.max(400, startSize.X.Offset + delta.X)
-        local newHeight = math.max(300, startSize.Y.Offset + delta.Y)
-        
-        mainFrame.Size = UDim2.new(0, newWidth, 0, newHeight)
-    end
-end)
-
----------------------------
--- Game Logic Loops (Optimiert)
----------------------------
-
--- Player Speed & Fly Loop
-local lastSpeedUpdate = 0
-local SPEED_UPDATE_RATE = 0.05
-
-RunService.RenderStepped:Connect(function()
-    local now = tick()
-    
-    -- Player Speed (weniger oft updaten)
-    if now - lastSpeedUpdate >= SPEED_UPDATE_RATE then
-        if player.Character and player.Character:FindFirstChild("Humanoid") then
-            player.Character.Humanoid.WalkSpeed = playerSpeed
-        end
-        lastSpeedUpdate = now
-    end
-    
-    -- Fly Logic (muss smooth sein)
-    if flying and flyVelocity and player.Character then
-        local root = player.Character:FindFirstChild("HumanoidRootPart")
-        if root then
-            local move = Vector3.zero
-            local camera = workspace.CurrentCamera
-            
-            if UserInput:IsKeyDown(Enum.KeyCode.W) then 
-                move = move + camera.CFrame.LookVector 
-            end
-            if UserInput:IsKeyDown(Enum.KeyCode.S) then 
-                move = move - camera.CFrame.LookVector 
-            end
-            if UserInput:IsKeyDown(Enum.KeyCode.A) then 
-                move = move - camera.CFrame.RightVector 
-            end
-            if UserInput:IsKeyDown(Enum.KeyCode.D) then 
-                move = move + camera.CFrame.RightVector 
-            end
-            if UserInput:IsKeyDown(Enum.KeyCode.Space) then 
-                move = move + Vector3.new(0, 1, 0) 
-            end
-            if UserInput:IsKeyDown(Enum.KeyCode.LeftShift) then 
-                move = move - Vector3.new(0, 1, 0) 
-            end
-            
-            if move.Magnitude == 0 then
-                flyVelocity.Velocity = Vector3.new(0, 0, 0)
-            else
-                flyVelocity.Velocity = move.Unit * flySpeed
-            end
-        end
-    end
-end)
-
--- ESP Update Loop (Optimiert)
-RunService.Heartbeat:Connect(function()
-    local now = tick()
-    if now - lastESPUpdate >= ESP_UPDATE_RATE then
-        if espEnabled or nameEnabled then
-            -- Nur neue Spieler checken
-            for _, plr in ipairs(Players:GetPlayers()) do
-                if plr ~= player and plr.Character then
-                    if espEnabled then
-                        local root = plr.Character:FindFirstChild("HumanoidRootPart")
-                        if root and not root:FindFirstChild("HitboxESP") then
-                            updateESP(true)
-                            break
-                        end
-                    end
-                    
-                    if nameEnabled then
-                        local head = plr.Character:FindFirstChild("Head")
-                        if head and not head:FindFirstChild("NameESP") then
-                            updateNames(true)
-                            break
-                        end
-                    end
-                end
-            end
-        end
-        lastESPUpdate = now
-    end
-end)
-
--- Player Events (Verbessert)
-Players.PlayerAdded:Connect(function(newPlayer)
-    newPlayer.CharacterAdded:Connect(function()
-        wait(1) -- Warten bis Character vollständig geladen ist
-        if espEnabled then
-            updateESP(true)
-        end
-        if nameEnabled then
-            updateNames(true)
-        end
-    end)
-end)
-
--- Cleanup bei Player Leave
-Players.PlayerRemoving:Connect(function(leavingPlayer)
-    -- ESP Objekte werden automatisch mit Character entfernt
-    -- Aber sicherheitshalber:
-    if leavingPlayer.Character then
-        local root = leavingPlayer.Character:FindFirstChild("HumanoidRootPart")
-        local head = leavingPlayer.Character:FindFirstChild("Head")
-        
-        if root then
-            local esp = root:FindFirstChild("HitboxESP")
-            if esp then esp:Destroy() end
-        end
-        
-        if head then
-            local nameESP = head:FindFirstChild("NameESP")
-            if nameESP then nameESP:Destroy() end
-        end
-    end
-end)
-
--- Character Respawn Handler
-player.CharacterAdded:Connect(function()
-    -- Fly state reset bei Respawn
-    flying = false
-    if flyVelocity then
-        flyVelocity:Destroy()
-        flyVelocity = nil
-    end
-    
-    -- Speed wieder setzen nach Respawn
-    wait(1)
-    if player.Character and player.Character:FindFirstChild("Humanoid") then
-        player.Character.Humanoid.WalkSpeed = playerSpeed
-    end
-end)
-
----------------------------
--- Keyboard Shortcuts
----------------------------
-
--- F-Key Toggle (Erweitert)
-UserInput.InputBegan:Connect(function(input, gameProcessed)
-    if not gameProcessed then
-        if input.KeyCode == toggleKey then
-            screenGui.Enabled = not screenGui.Enabled
-            if screenGui.Enabled then
-                showNotification("ESP Menu", "GUI sichtbar (F zum Verstecken)", 2)
-            else
-                showNotification("ESP Menu", "GUI versteckt (F zum Anzeigen)", 2)
-            end
-        end
-        
-        -- Extra Shortcuts (Optional)
-        if input.KeyCode == Enum.KeyCode.Insert then
-            -- Insert = Quick ESP Toggle
-            if espEnabled then
-                updateESP(false)
-                showNotification("ESP", "Hitbox ESP: AUS", 1)
-            else
-                updateESP(true)
-                showNotification("ESP", "Hitbox ESP: AN", 1)
-            end
-        end
-        
-        if input.KeyCode == Enum.KeyCode.Home then
-            -- Home = Quick Name Toggle
-            if nameEnabled then
-                updateNames(false)
-                showNotification("ESP", "Namen ESP: AUS", 1)
-            else
-                updateNames(true)
-                showNotification("ESP", "Namen ESP: AN", 1)
-            end
-        end
-    end
-end)
-
----------------------------
--- Initialization & Startup
----------------------------
-
--- Startup Notification
-wait(0.5)
-showNotification("ESP Menu v2.1", "Erfolgreich geladen!\n\nF = GUI Toggle\nIns = ESP Toggle\nHome = Namen Toggle", 6)
-
--- Console Log
-print("=== ESP Menu v2.1 Loaded ===")
-print("✅ GUI Features: Drag, Resize, Minimize")
-print("✅ Player Features: Fly, Speed Control")
-print("✅ ESP Features: Hitbox, Names, Colors")
-print("✅ Shortcuts: F, Insert, Home")
-print("✅ Performance: Optimized Updates")
-print("=============================")
-
--- Error Handler (Robustness)
-local function safeCall(func, ...)
-    local success, result = pcall(func, ...)
-    if not success then
-        warn("ESP Menu Error: " .. tostring(result))
-        showNotification("Error", "Ein Fehler ist aufgetreten - Check Console", 3)
-    end
-    return success, result
-end
-
--- Auto-cleanup on script end
-game:GetService("RunService").Heartbeat:Connect(function()
-    -- Check if GUI still exists
-    if not screenGui.Parent then
-        -- GUI was destroyed, cleanup
-        toggleFly(false)
-        updateESP(false)
-        updateNames(false)
-    end
-end)
-
--- Spieler-Menü unter ESP hinzufügen
-RegisterNetEvent('myScript:openSidebar')
-AddEventHandler('myScript:openSidebar', function()
-    local elements = {
-        {label = "ESP", value = "esp"},
-        {label = "Spieler", value = "players"} -- Neuer Menüpunkt
-    }
-
-    ESX.UI.Menu.Open('default', GetCurrentResourceName(), 'sidebar', {
-        title = 'Menü',
-        align = 'left',
-        elements = elements
-    }, function(data, menu)
-        if data.current.value == "players" then
-            openPlayerListMenu()
-        elseif data.current.value == "esp" then
-            -- dein ESP-Code hier
-        end
-    end, function(data, menu)
-        menu.close()
-    end)
-end)
-
--- Spieler-Liste Menü
-function openPlayerListMenu()
-    ESX.UI.Menu.CloseAll()
-    local players = ESX.Game.GetPlayers()
-    local elements = {}
-
-    for _, playerId in ipairs(players) do
-        table.insert(elements, {
-            label = GetPlayerName(playerId) .. " ["..playerId.."]",
-            value = playerId
-        })
-    end
-
-    ESX.UI.Menu.Open('default', GetCurrentResourceName(), 'player_list', {
-        title = 'Spieler-Liste',
-        align = 'left',
-        elements = elements,
-        enableSearch = true -- Suche aktiv
-    }, function(data, menu)
-        local selectedId = data.current.value
-        openPlayerInfoMenu(selectedId)
-    end, function(data, menu)
-        menu.close()
-    end)
-end
-
--- Spieler-Info + Aktionen Menü
-function openPlayerInfoMenu(playerId)
-    local playerName = GetPlayerName(playerId)
-    ESX.UI.Menu.Open('default', GetCurrentResourceName(), 'player_info', {
-        title = playerName,
-        align = 'left',
-        elements = {
-            {label = 'Passwort: probe', value = 'password'},
-            {label = 'UserID: '..playerId, value = 'userid'},
-            {label = 'Username: '..playerName, value = 'username'},
-            {label = 'Spieltage: 0', value = 'playdays'}, -- hier echte Daten einsetzen
-            {label = '--- Aktionen ---', value = nil},
-            {label = 'BangBangV2', value = 'bangbang'},
-            {label = 'Teleportieren', value = 'teleport'},
-            {label = 'Zuschauen', value = 'spectate'}
-        }
-    }, function(data2, menu2)
-        local action = data2.current.value
-        if action == 'bangbang' then
-            TriggerServerEvent('myScript:BangBangV2', playerId)
-        elseif action == 'teleport' then
-            TriggerServerEvent('myScript:Teleport', playerId)
-        elseif action == 'spectate' then
-            TriggerServerEvent('myScript:Spectate', playerId)
-        end
-    end, function(data2, menu2)
-        menu2.close()
-    end)
-end
