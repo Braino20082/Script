@@ -9,111 +9,7 @@ local playerGui = player:WaitForChild("PlayerGui")
 
 -- alte GUIs löschen
 for _,v in ipairs(playerGui:GetChildren()) do
-	if v.Name == "CustomMainUI" or v.Name == "PlayerInfoUI" then v:Destroy() ---------------------------
--- Spieler Panel Inhalte (Player List with Search)
----------------------------
-do
-	local panel = panels["Spieler"]
-	
-	-- Search Box
-	local searchBox = Instance.new("TextBox")
-	searchBox.Size = UDim2.new(0.9,0,0.08,0)
-	searchBox.Position = UDim2.new(0.05,0,0.05,0)
-	searchBox.PlaceholderText = "Spieler suchen..."
-	searchBox.Text = ""
-	searchBox.Font = Enum.Font.SourceSans
-	searchBox.TextScaled = true
-	searchBox.BackgroundColor3 = Color3.fromRGB(50,50,50)
-	searchBox.TextColor3 = Color3.new(1,1,1)
-	searchBox.PlaceholderColor3 = Color3.fromRGB(150,150,150)
-	searchBox.Parent = panel
-	
-	local searchCorner = Instance.new("UICorner")
-	searchCorner.CornerRadius = UDim.new(0,4)
-	searchCorner.Parent = searchBox
-	
-	-- Player List ScrollFrame
-	local playerListFrame = Instance.new("ScrollingFrame")
-	playerListFrame.Size = UDim2.new(0.9,0,0.8,0)
-	playerListFrame.Position = UDim2.new(0.05,0,0.15,0)
-	playerListFrame.BackgroundColor3 = Color3.fromRGB(40,40,40)
-	playerListFrame.BorderSizePixel = 0
-	playerListFrame.ScrollBarThickness = 8
-	playerListFrame.Parent = panel
-	
-	local listCorner = Instance.new("UICorner")
-	listCorner.CornerRadius = UDim.new(0,4)
-	listCorner.Parent = playerListFrame
-	
-	local listLayout = Instance.new("UIListLayout")
-	listLayout.SortOrder = Enum.SortOrder.Name
-	listLayout.Padding = UDim.new(0,2)
-	listLayout.Parent = playerListFrame
-	
-	local function updatePlayerList(filter)
-		for _,child in pairs(playerListFrame:GetChildren()) do
-			if child:IsA("TextButton") then
-				child:Destroy()
-			end
-		end
-		
-		for _,plr in pairs(Players:GetPlayers()) do
-			if plr ~= player then
-				local name = plr.Name:lower()
-				local displayName = (plr.DisplayName or plr.Name):lower()
-				filter = filter and filter:lower() or ""
-				
-				if filter == "" or name:find(filter) or displayName:find(filter) then
-					local playerBtn = Instance.new("TextButton")
-					playerBtn.Size = UDim2.new(1,0,0,30)
-					playerBtn.Text = plr.DisplayName .. " (@" .. plr.Name .. ")"
-					playerBtn.Font = Enum.Font.SourceSans
-					playerBtn.TextScaled = true
-					playerBtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
-					playerBtn.TextColor3 = Color3.new(1,1,1)
-					playerBtn.Parent = playerListFrame
-					
-					local playerBtnCorner = Instance.new("UICorner")
-					playerBtnCorner.CornerRadius = UDim.new(0,2)
-					playerBtnCorner.Parent = playerBtn
-					
-					playerBtn.MouseButton1Click:Connect(function()
-						selectedPlayer = plr
-						createPlayerInfoGUI(plr)
-					end)
-					
-					playerBtn.MouseEnter:Connect(function()
-						playerBtn.BackgroundColor3 = Color3.fromRGB(80,80,120)
-					end)
-					
-					playerBtn.MouseLeave:Connect(function()
-						playerBtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
-					end)
-				end
-			end
-		end
-		
-		playerListFrame.CanvasSize = UDim2.new(0,0,0,listLayout.AbsoluteContentSize.Y)
-	end
-	
-	searchBox.Changed:Connect(function(prop)
-		if prop == "Text" then
-			updatePlayerList(searchBox.Text)
-		end
-	end)
-	
-	-- Update player list when players join/leave
-	Players.PlayerAdded:Connect(function()
-		updatePlayerList(searchBox.Text)
-	end)
-	
-	Players.PlayerRemoving:Connect(function()
-		updatePlayerList(searchBox.Text)
-	end)
-	
-	-- Initial load
-	updatePlayerList("")
-end
+	if v.Name == "CustomMainUI" or v.Name == "PlayerInfoUI" then v:Destroy() end
 end
 
 -- Root ScreenGui
@@ -124,8 +20,8 @@ screenGui.Parent = playerGui
 
 -- Hauptframe
 local app = Instance.new("Frame")
-app.Size = UDim2.new(0.25,0,0.25,0)
-app.Position = UDim2.new(0.05,0,0.05,0)
+app.Size = UDim2.new(0.7,0,0.7,0)
+app.Position = UDim2.new(0.15,0,0.15,0)
 app.BackgroundColor3 = Color3.fromRGB(28,28,28)
 app.BorderSizePixel = 0
 app.Parent = screenGui
@@ -191,7 +87,7 @@ content.Parent = app
 
 -- Panels
 local panels = {}
-local buttonNames = {"Player","Spieler","ESP","Voice"}
+local buttonNames = {"Player","Players","ESP","Voice"}
 local selectedPlayer = nil
 
 for i,name in ipairs(buttonNames) do
@@ -273,11 +169,9 @@ RunService.RenderStepped:Connect(function()
 	end
 end)
 
--- ESP Hitbox / Name with color options
+-- ESP Hitbox / Name
 local espEnabled = false
 local nameEnabled = false
-local hitboxColor = Color3.fromRGB(255,0,0)
-local nameColor = Color3.fromRGB(0,255,0)
 
 local function updateESP(state)
 	espEnabled = state
@@ -293,10 +187,8 @@ local function updateESP(state)
 						box.Adornee = root
 						box.AlwaysOnTop = true
 						box.Transparency = 0.8
-						box.Color3 = hitboxColor
+						box.Color3 = Color3.fromRGB(255,0,0)
 						box.Parent = root
-					else
-						root.HitboxESP.Color3 = hitboxColor
 					end
 				else
 					if root:FindFirstChild("HitboxESP") then
@@ -327,10 +219,8 @@ local function updateNames(state)
 					text.Text = plr.Name
 					text.Font = Enum.Font.SourceSansBold
 					text.TextScaled = true
-					text.TextColor3 = nameColor
+					text.TextColor3 = Color3.fromRGB(0,255,0)
 					text.Parent = tag
-				else
-					head.NameESP:GetChildren()[1].TextColor3 = nameColor
 				end
 			else
 				if head:FindFirstChild("NameESP") then
@@ -692,11 +582,10 @@ function createPlayerInfoGUI(targetPlayer)
 	infoScreenGui.Parent = playerGui
 	
 	local infoFrame = Instance.new("Frame")
-	infoFrame.Size = UDim2.new(0.35,0,0.4,0)
-	infoFrame.Position = UDim2.new(0.32,0,0.3,0)
+	infoFrame.Size = UDim2.new(0.4,0,0.5,0)
+	infoFrame.Position = UDim2.new(0.3,0,0.25,0)
 	infoFrame.BackgroundColor3 = Color3.fromRGB(35,35,35)
 	infoFrame.BorderSizePixel = 0
-	infoFrame.Visible = true
 	infoFrame.Parent = infoScreenGui
 	
 	local infoCorner = Instance.new("UICorner")
@@ -741,79 +630,6 @@ function createPlayerInfoGUI(targetPlayer)
 		infoScreenGui:Destroy()
 	end)
 	
-	-- Make the info GUI draggable
-	local draggingInfo = false
-	local dragInputInfo, dragStartInfo, startPosInfo
-	
-	titleBar.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			draggingInfo = true
-			dragStartInfo = input.Position
-			startPosInfo = infoFrame.Position
-			
-			input.Changed:Connect(function()
-				if input.UserInputState == Enum.UserInputState.End then
-					draggingInfo = false
-				end
-			end)
-		end
-	end)
-	
-	titleBar.InputChanged:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseMovement then
-			dragInputInfo = input
-		end
-	end)
-	
-	UserInput.InputChanged:Connect(function(input)
-		if input == dragInputInfo and draggingInfo then
-			local delta = input.Position - dragStartInfo
-			infoFrame.Position = UDim2.new(
-				startPosInfo.X.Scale, startPosInfo.X.Offset + delta.X,
-				startPosInfo.Y.Scale, startPosInfo.Y.Offset + delta.Y
-			)
-		end
-	end)
-	
-	-- Add resize handle to info GUI
-	local resizeInfo = Instance.new("Frame")
-	resizeInfo.Size = UDim2.new(0.05,0,0.08,0)
-	resizeInfo.Position = UDim2.new(0.95,0,0.92,0)
-	resizeInfo.BackgroundColor3 = Color3.fromRGB(80,80,80)
-	resizeInfo.BorderSizePixel = 0
-	resizeInfo.Parent = infoFrame
-	
-	local resizeInfoCorner = Instance.new("UICorner")
-	resizeInfoCorner.CornerRadius = UDim.new(0,2)
-	resizeInfoCorner.Parent = resizeInfo
-	
-	-- Make info GUI resizable
-	local resizingInfo = false
-	local startSizeInfo, mouseStartInfo
-	
-	resizeInfo.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			resizingInfo = true
-			startSizeInfo = infoFrame.Size
-			mouseStartInfo = input.Position
-			
-			input.Changed:Connect(function()
-				if input.UserInputState == Enum.UserInputState.End then
-					resizingInfo = false
-				end
-			end)
-		end
-	end)
-	
-	UserInput.InputChanged:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseMovement and resizingInfo then
-			local delta = input.Position - mouseStartInfo
-			local newWidth = math.max(250, startSizeInfo.X.Offset + delta.X)
-			local newHeight = math.max(200, startSizeInfo.Y.Offset + delta.Y)
-			infoFrame.Size = UDim2.new(startSizeInfo.X.Scale, newWidth, startSizeInfo.Y.Scale, newHeight)
-		end
-	end)
-	
 	-- Info Content
 	local infoContent = Instance.new("Frame")
 	infoContent.Size = UDim2.new(1,0,0.85,0)
@@ -821,147 +637,49 @@ function createPlayerInfoGUI(targetPlayer)
 	infoContent.BackgroundTransparency = 1
 	infoContent.Parent = infoFrame
 	
-	-- Player Name (Editable)
-	local nameFrame = Instance.new("Frame")
-	nameFrame.Size = UDim2.new(0.9,0,0.1,0)
-	nameFrame.Position = UDim2.new(0.05,0,0.05,0)
-	nameFrame.BackgroundColor3 = Color3.fromRGB(50,50,50)
-	nameFrame.BorderSizePixel = 0
-	nameFrame.Parent = infoContent
-	
-	local nameFrameCorner = Instance.new("UICorner")
-	nameFrameCorner.CornerRadius = UDim.new(0,4)
-	nameFrameCorner.Parent = nameFrame
-	
+	-- Player Name
 	local nameLabel = Instance.new("TextLabel")
-	nameLabel.Size = UDim2.new(0.3,0,1,0)
-	nameLabel.Position = UDim2.new(0.05,0,0,0)
-	nameLabel.Text = "Name:"
+	nameLabel.Size = UDim2.new(0.9,0,0.1,0)
+	nameLabel.Position = UDim2.new(0.05,0,0.05,0)
+	nameLabel.Text = "Name: " .. targetPlayer.DisplayName .. " (@" .. targetPlayer.Name .. ")"
 	nameLabel.BackgroundTransparency = 1
 	nameLabel.TextColor3 = Color3.new(1,1,1)
-	nameLabel.Font = Enum.Font.SourceSansBold
+	nameLabel.Font = Enum.Font.SourceSans
 	nameLabel.TextScaled = true
 	nameLabel.TextXAlignment = Enum.TextXAlignment.Left
-	nameLabel.Parent = nameFrame
+	nameLabel.Parent = infoContent
 	
-	local nameBox = Instance.new("TextBox")
-	nameBox.Size = UDim2.new(0.6,0,0.8,0)
-	nameBox.Position = UDim2.new(0.35,0,0.1,0)
-	nameBox.Text = targetPlayer.DisplayName .. " (@" .. targetPlayer.Name .. ")"
-	nameBox.BackgroundColor3 = Color3.fromRGB(70,70,70)
-	nameBox.TextColor3 = Color3.new(1,1,1)
-	nameBox.Font = Enum.Font.SourceSans
-	nameBox.TextScaled = true
-	nameBox.Parent = nameFrame
-	
-	local nameBoxCorner = Instance.new("UICorner")
-	nameBoxCorner.CornerRadius = UDim.new(0,2)
-	nameBoxCorner.Parent = nameBox
-	
-	-- Account Age (Editable)
-	local ageFrame = Instance.new("Frame")
-	ageFrame.Size = UDim2.new(0.9,0,0.1,0)
-	ageFrame.Position = UDim2.new(0.05,0,0.17,0)
-	ageFrame.BackgroundColor3 = Color3.fromRGB(50,50,50)
-	ageFrame.BorderSizePixel = 0
-	ageFrame.Parent = infoContent
-	
-	local ageFrameCorner = Instance.new("UICorner")
-	ageFrameCorner.CornerRadius = UDim.new(0,4)
-	ageFrameCorner.Parent = ageFrame
-	
+	-- Account Age (approximation)
 	local ageLabel = Instance.new("TextLabel")
-	ageLabel.Size = UDim2.new(0.3,0,1,0)
-	ageLabel.Position = UDim2.new(0.05,0,0,0)
-	ageLabel.Text = "Tage:"
+	ageLabel.Size = UDim2.new(0.9,0,0.1,0)
+	ageLabel.Position = UDim2.new(0.05,0,0.15,0)
+	ageLabel.Text = "Account Age: " .. targetPlayer.AccountAge .. " Tage"
 	ageLabel.BackgroundTransparency = 1
 	ageLabel.TextColor3 = Color3.new(1,1,1)
-	ageLabel.Font = Enum.Font.SourceSansBold
+	ageLabel.Font = Enum.Font.SourceSans
 	ageLabel.TextScaled = true
 	ageLabel.TextXAlignment = Enum.TextXAlignment.Left
-	ageLabel.Parent = ageFrame
+	ageLabel.Parent = infoContent
 	
-	local ageBox = Instance.new("TextBox")
-	ageBox.Size = UDim2.new(0.6,0,0.8,0)
-	ageBox.Position = UDim2.new(0.35,0,0.1,0)
-	ageBox.Text = tostring(targetPlayer.AccountAge)
-	ageBox.BackgroundColor3 = Color3.fromRGB(70,70,70)
-	ageBox.TextColor3 = Color3.new(1,1,1)
-	ageBox.Font = Enum.Font.SourceSans
-	ageBox.TextScaled = true
-	ageBox.Parent = ageFrame
-	
-	local ageBoxCorner = Instance.new("UICorner")
-	ageBoxCorner.CornerRadius = UDim.new(0,2)
-	ageBoxCorner.Parent = ageBox
-	
-	-- Password (Editable - Fake)
-	local passFrame = Instance.new("Frame")
-	passFrame.Size = UDim2.new(0.9,0,0.1,0)
-	passFrame.Position = UDim2.new(0.05,0,0.29,0)
-	passFrame.BackgroundColor3 = Color3.fromRGB(50,50,50)
-	passFrame.BorderSizePixel = 0
-	passFrame.Parent = infoContent
-	
-	local passFrameCorner = Instance.new("UICorner")
-	passFrameCorner.CornerRadius = UDim.new(0,4)
-	passFrameCorner.Parent = passFrame
-	
+	-- Password (Note: This is not actually accessible for security reasons)
 	local passLabel = Instance.new("TextLabel")
-	passLabel.Size = UDim2.new(0.3,0,1,0)
-	passLabel.Position = UDim2.new(0.05,0,0,0)
-	passLabel.Text = "Passwort:"
+	passLabel.Size = UDim2.new(0.9,0,0.1,0)
+	passLabel.Position = UDim2.new(0.05,0,0.25,0)
+	passLabel.Text = "Passwort: [NICHT VERFÜGBAR - Sicherheitsgründe]"
 	passLabel.BackgroundTransparency = 1
-	passLabel.TextColor3 = Color3.new(1,1,1)
-	passLabel.Font = Enum.Font.SourceSansBold
+	passLabel.TextColor3 = Color3.fromRGB(150,150,150)
+	passLabel.Font = Enum.Font.SourceSans
 	passLabel.TextScaled = true
 	passLabel.TextXAlignment = Enum.TextXAlignment.Left
-	passLabel.Parent = passFrame
-	
-	-- Password (Real password retrieval - Note: This is not actually possible in Roblox for security reasons)
-	local function getRealPassword(targetPlayer)
-		-- This is a simulation - real passwords cannot be accessed
-		local passwords = {
-			"MySecretPass123!",
-			"Roblox2024$",
-			"Gaming4Life!",
-			"SuperSecret99@",
-			"PlayerPassword#1",
-			"SafeAndSecure*7",
-			"TopSecret456!",
-			"MyRobloxPass$",
-			"GamerLife123@",
-			"SecurePass99#"
-		}
-		-- Use player's UserId as seed for consistent "password"
-		math.randomseed(targetPlayer.UserId)
-		local password = passwords[math.random(1, #passwords)]
-		math.randomseed(tick()) -- Reset seed
-		return password
-	end
-	
-	local passBox = Instance.new("TextBox")
-	passBox.Size = UDim2.new(0.6,0,0.8,0)
-	passBox.Position = UDim2.new(0.35,0,0.1,0)
-	passBox.Text = getRealPassword(targetPlayer)
-	passBox.BackgroundColor3 = Color3.fromRGB(70,70,70)
-	passBox.TextColor3 = Color3.fromRGB(255,100,100)
-	passBox.Font = Enum.Font.SourceSans
-	passBox.TextScaled = true
-	passBox.PlaceholderText = "Echtes Passwort"
-	passBox.Parent = passFrame
-	
-	local passBoxCorner = Instance.new("UICorner")
-	passBoxCorner.CornerRadius = UDim.new(0,2)
-	passBoxCorner.Parent = passBox
+	passLabel.Parent = infoContent
 	
 	-- Action buttons
 	local buttonData = {
-		{name = "Bang", pos = UDim2.new(0.05,0,0.42,0), func = function() bangPlayer(targetPlayer) end},
-		{name = "Bang V2", pos = UDim2.new(0.35,0,0.42,0), func = function() bangPlayer(targetPlayer, "V2") end},
-		{name = "Teleportieren", pos = UDim2.new(0.65,0,0.42,0), func = function() teleportToPlayer(targetPlayer) end},
-		{name = "Zuschauen", pos = UDim2.new(0.05,0,0.57,0), func = function() watchPlayer(targetPlayer) end},
-		{name = "Kopfsitzen", pos = UDim2.new(0.35,0,0.57,0), func = function() headsitPlayer(targetPlayer) end}
+		{name = "Bang", pos = UDim2.new(0.05,0,0.4,0), func = function() bangPlayer(targetPlayer) end},
+		{name = "Bang V2", pos = UDim2.new(0.35,0,0.4,0), func = function() bangPlayer(targetPlayer, "V2") end},
+		{name = "Teleportieren", pos = UDim2.new(0.65,0,0.4,0), func = function() teleportToPlayer(targetPlayer) end},
+		{name = "Zuschauen", pos = UDim2.new(0.05,0,0.55,0), func = function() watchPlayer(targetPlayer) end},
+		{name = "Kopfsitzen", pos = UDim2.new(0.35,0,0.55,0), func = function() headsitPlayer(targetPlayer) end}
 	}
 	
 	for _,btnData in pairs(buttonData) do
@@ -993,7 +711,7 @@ function createPlayerInfoGUI(targetPlayer)
 	-- Stop watching button
 	local stopWatchBtn = Instance.new("TextButton")
 	stopWatchBtn.Size = UDim2.new(0.25,0,0.12,0)
-	stopWatchBtn.Position = UDim2.new(0.65,0,0.57,0)
+	stopWatchBtn.Position = UDim2.new(0.65,0,0.55,0)
 	stopWatchBtn.Text = "Stop Schauen"
 	stopWatchBtn.Font = Enum.Font.SourceSansBold
 	stopWatchBtn.TextScaled = true
@@ -1041,7 +759,7 @@ do
 	local panel = panels["ESP"]
 
 	local hitboxBtn = Instance.new("TextButton")
-	hitboxBtn.Size = UDim2.new(0.6,0,0.08,0)
+	hitboxBtn.Size = UDim2.new(0.6,0,0.1,0)
 	hitboxBtn.Position = UDim2.new(0.05,0,0.05,0)
 	hitboxBtn.Text = "Hitbox OFF"
 	hitboxBtn.Font = Enum.Font.SourceSansBold
@@ -1066,48 +784,9 @@ do
 		end
 	end)
 
-	-- Hitbox Color Buttons
-	local hitboxColorLabel = Instance.new("TextLabel")
-	hitboxColorLabel.Size = UDim2.new(0.9,0,0.05,0)
-	hitboxColorLabel.Position = UDim2.new(0.05,0,0.15,0)
-	hitboxColorLabel.Text = "Hitbox Farbe:"
-	hitboxColorLabel.BackgroundTransparency = 1
-	hitboxColorLabel.TextColor3 = Color3.new(1,1,1)
-	hitboxColorLabel.Font = Enum.Font.SourceSansBold
-	hitboxColorLabel.TextScaled = true
-	hitboxColorLabel.TextXAlignment = Enum.TextXAlignment.Left
-	hitboxColorLabel.Parent = panel
-
-	local hitboxColors = {
-		{name = "Rot", color = Color3.fromRGB(255,0,0), pos = UDim2.new(0.05,0,0.22,0)},
-		{name = "Grün", color = Color3.fromRGB(0,255,0), pos = UDim2.new(0.25,0,0.22,0)},
-		{name = "Blau", color = Color3.fromRGB(0,0,255), pos = UDim2.new(0.45,0,0.22,0)},
-		{name = "Gelb", color = Color3.fromRGB(255,255,0), pos = UDim2.new(0.65,0,0.22,0)},
-		{name = "Pink", color = Color3.fromRGB(255,0,255), pos = UDim2.new(0.85,0,0.22,0)}
-	}
-
-	for _,colorData in pairs(hitboxColors) do
-		local colorBtn = Instance.new("TextButton")
-		colorBtn.Size = UDim2.new(0.15,0,0.06,0)
-		colorBtn.Position = colorData.pos
-		colorBtn.Text = ""
-		colorBtn.BackgroundColor3 = colorData.color
-		colorBtn.Parent = panel
-
-		local colorCorner = Instance.new("UICorner")
-		colorCorner.CornerRadius = UDim.new(0,4)
-		colorCorner.Parent = colorBtn
-
-		colorBtn.MouseButton1Click:Connect(function()
-			hitboxColor = colorData.color
-			if espEnabled then updateESP(true) end
-			showNotification("Hitbox Farbe: " .. colorData.name)
-		end)
-	end
-
 	local nameBtn = Instance.new("TextButton")
-	nameBtn.Size = UDim2.new(0.6,0,0.08,0)
-	nameBtn.Position = UDim2.new(0.05,0,0.32,0)
+	nameBtn.Size = UDim2.new(0.6,0,0.1,0)
+	nameBtn.Position = UDim2.new(0.05,0,0.2,0)
 	nameBtn.Text = "Names OFF"
 	nameBtn.Font = Enum.Font.SourceSansBold
 	nameBtn.TextScaled = true
@@ -1130,51 +809,12 @@ do
 			nameBtn.BackgroundColor3 = Color3.fromRGB(50,150,50)
 		end
 	end)
-
-	-- Name Color Buttons
-	local nameColorLabel = Instance.new("TextLabel")
-	nameColorLabel.Size = UDim2.new(0.9,0,0.05,0)
-	nameColorLabel.Position = UDim2.new(0.05,0,0.42,0)
-	nameColorLabel.Text = "Name Farbe:"
-	nameColorLabel.BackgroundTransparency = 1
-	nameColorLabel.TextColor3 = Color3.new(1,1,1)
-	nameColorLabel.Font = Enum.Font.SourceSansBold
-	nameColorLabel.TextScaled = true
-	nameColorLabel.TextXAlignment = Enum.TextXAlignment.Left
-	nameColorLabel.Parent = panel
-
-	local nameColors = {
-		{name = "Rot", color = Color3.fromRGB(255,0,0), pos = UDim2.new(0.05,0,0.49,0)},
-		{name = "Grün", color = Color3.fromRGB(0,255,0), pos = UDim2.new(0.25,0,0.49,0)},
-		{name = "Blau", color = Color3.fromRGB(0,0,255), pos = UDim2.new(0.45,0,0.49,0)},
-		{name = "Gelb", color = Color3.fromRGB(255,255,0), pos = UDim2.new(0.65,0,0.49,0)},
-		{name = "Pink", color = Color3.fromRGB(255,0,255), pos = UDim2.new(0.85,0,0.49,0)}
-	}
-
-	for _,colorData in pairs(nameColors) do
-		local colorBtn = Instance.new("TextButton")
-		colorBtn.Size = UDim2.new(0.15,0,0.06,0)
-		colorBtn.Position = colorData.pos
-		colorBtn.Text = ""
-		colorBtn.BackgroundColor3 = colorData.color
-		colorBtn.Parent = panel
-
-		local colorCorner = Instance.new("UICorner")
-		colorCorner.CornerRadius = UDim.new(0,4)
-		colorCorner.Parent = colorBtn
-
-		colorBtn.MouseButton1Click:Connect(function()
-			nameColor = colorData.color
-			if nameEnabled then updateNames(true) end
-			showNotification("Name Farbe: " .. colorData.name)
-		end)
-	end
 	
 	-- ESP Info
 	local espInfo = Instance.new("TextLabel")
 	espInfo.Size = UDim2.new(0.9,0,0.2,0)
-	espInfo.Position = UDim2.new(0.05,0,0.6,0)
-	espInfo.Text = "ESP Features:\n• Hitbox zeigt Spieler-Kollisionsboxen\n• Names zeigt Spielernamen über Köpfen\n• Farben können angepasst werden\n• Updates automatisch bei neuen Spielern"
+	espInfo.Position = UDim2.new(0.05,0,0.4,0)
+	espInfo.Text = "ESP Features:\n• Hitbox zeigt Spieler-Kollisionsboxen\n• Names zeigt Spielernamen über Köpfen\n• Updates automatisch bei neuen Spielern"
 	espInfo.BackgroundColor3 = Color3.fromRGB(40,40,40)
 	espInfo.TextColor3 = Color3.new(1,1,1)
 	espInfo.Font = Enum.Font.SourceSans
@@ -1351,12 +991,12 @@ do
 	end)
 end
 
--- Toggle GUI with key (L)
+-- Toggle GUI with key (F3)
 UserInput.InputBegan:Connect(function(input, gameProcessed)
-	if not gameProcessed and input.KeyCode == Enum.KeyCode.L then
+	if not gameProcessed and input.KeyCode == Enum.KeyCode.F3 then
 		app.Visible = not app.Visible
 	end
 end)
 
 print("Enhanced GUI mit Player List, ESP, Voice Reset und Player Actions geladen!")
-print("Drücke L um das GUI zu öffnen/schließen")
+print("Drücke F3 um das GUI zu öffnen/schließen")
