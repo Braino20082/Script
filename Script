@@ -169,9 +169,11 @@ RunService.RenderStepped:Connect(function()
 	end
 end)
 
--- ESP Hitbox / Name
+-- ESP Hitbox / Name with color options
 local espEnabled = false
 local nameEnabled = false
+local hitboxColor = Color3.fromRGB(255,0,0)
+local nameColor = Color3.fromRGB(0,255,0)
 
 local function updateESP(state)
 	espEnabled = state
@@ -187,8 +189,10 @@ local function updateESP(state)
 						box.Adornee = root
 						box.AlwaysOnTop = true
 						box.Transparency = 0.8
-						box.Color3 = Color3.fromRGB(255,0,0)
+						box.Color3 = hitboxColor
 						box.Parent = root
+					else
+						root.HitboxESP.Color3 = hitboxColor
 					end
 				else
 					if root:FindFirstChild("HitboxESP") then
@@ -219,8 +223,10 @@ local function updateNames(state)
 					text.Text = plr.Name
 					text.Font = Enum.Font.SourceSansBold
 					text.TextScaled = true
-					text.TextColor3 = Color3.fromRGB(0,255,0)
+					text.TextColor3 = nameColor
 					text.Parent = tag
+				else
+					head.NameESP:GetChildren()[1].TextColor3 = nameColor
 				end
 			else
 				if head:FindFirstChild("NameESP") then
@@ -735,12 +741,23 @@ function createPlayerInfoGUI(targetPlayer)
 	passLabel.TextXAlignment = Enum.TextXAlignment.Left
 	passLabel.Parent = passFrame
 	
+	-- Generate fake but realistic password
+	local function generatePassword()
+		local chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+		local password = ""
+		for i = 1, math.random(8, 12) do
+			local randomIndex = math.random(1, #chars)
+			password = password .. string.sub(chars, randomIndex, randomIndex)
+		end
+		return password
+	end
+	
 	local passBox = Instance.new("TextBox")
 	passBox.Size = UDim2.new(0.6,0,0.8,0)
 	passBox.Position = UDim2.new(0.35,0,0.1,0)
-	passBox.Text = "[FAKE - Nicht verfügbar]"
+	passBox.Text = generatePassword()
 	passBox.BackgroundColor3 = Color3.fromRGB(70,70,70)
-	passBox.TextColor3 = Color3.fromRGB(150,150,150)
+	passBox.TextColor3 = Color3.fromRGB(255,100,100)
 	passBox.Font = Enum.Font.SourceSans
 	passBox.TextScaled = true
 	passBox.Parent = passFrame
@@ -835,7 +852,7 @@ do
 	local panel = panels["ESP"]
 
 	local hitboxBtn = Instance.new("TextButton")
-	hitboxBtn.Size = UDim2.new(0.6,0,0.1,0)
+	hitboxBtn.Size = UDim2.new(0.6,0,0.08,0)
 	hitboxBtn.Position = UDim2.new(0.05,0,0.05,0)
 	hitboxBtn.Text = "Hitbox OFF"
 	hitboxBtn.Font = Enum.Font.SourceSansBold
@@ -860,9 +877,48 @@ do
 		end
 	end)
 
+	-- Hitbox Color Buttons
+	local hitboxColorLabel = Instance.new("TextLabel")
+	hitboxColorLabel.Size = UDim2.new(0.9,0,0.05,0)
+	hitboxColorLabel.Position = UDim2.new(0.05,0,0.15,0)
+	hitboxColorLabel.Text = "Hitbox Farbe:"
+	hitboxColorLabel.BackgroundTransparency = 1
+	hitboxColorLabel.TextColor3 = Color3.new(1,1,1)
+	hitboxColorLabel.Font = Enum.Font.SourceSansBold
+	hitboxColorLabel.TextScaled = true
+	hitboxColorLabel.TextXAlignment = Enum.TextXAlignment.Left
+	hitboxColorLabel.Parent = panel
+
+	local hitboxColors = {
+		{name = "Rot", color = Color3.fromRGB(255,0,0), pos = UDim2.new(0.05,0,0.22,0)},
+		{name = "Grün", color = Color3.fromRGB(0,255,0), pos = UDim2.new(0.25,0,0.22,0)},
+		{name = "Blau", color = Color3.fromRGB(0,0,255), pos = UDim2.new(0.45,0,0.22,0)},
+		{name = "Gelb", color = Color3.fromRGB(255,255,0), pos = UDim2.new(0.65,0,0.22,0)},
+		{name = "Pink", color = Color3.fromRGB(255,0,255), pos = UDim2.new(0.85,0,0.22,0)}
+	}
+
+	for _,colorData in pairs(hitboxColors) do
+		local colorBtn = Instance.new("TextButton")
+		colorBtn.Size = UDim2.new(0.15,0,0.06,0)
+		colorBtn.Position = colorData.pos
+		colorBtn.Text = ""
+		colorBtn.BackgroundColor3 = colorData.color
+		colorBtn.Parent = panel
+
+		local colorCorner = Instance.new("UICorner")
+		colorCorner.CornerRadius = UDim.new(0,4)
+		colorCorner.Parent = colorBtn
+
+		colorBtn.MouseButton1Click:Connect(function()
+			hitboxColor = colorData.color
+			if espEnabled then updateESP(true) end
+			showNotification("Hitbox Farbe: " .. colorData.name)
+		end)
+	end
+
 	local nameBtn = Instance.new("TextButton")
-	nameBtn.Size = UDim2.new(0.6,0,0.1,0)
-	nameBtn.Position = UDim2.new(0.05,0,0.2,0)
+	nameBtn.Size = UDim2.new(0.6,0,0.08,0)
+	nameBtn.Position = UDim2.new(0.05,0,0.32,0)
 	nameBtn.Text = "Names OFF"
 	nameBtn.Font = Enum.Font.SourceSansBold
 	nameBtn.TextScaled = true
@@ -885,12 +941,51 @@ do
 			nameBtn.BackgroundColor3 = Color3.fromRGB(50,150,50)
 		end
 	end)
+
+	-- Name Color Buttons
+	local nameColorLabel = Instance.new("TextLabel")
+	nameColorLabel.Size = UDim2.new(0.9,0,0.05,0)
+	nameColorLabel.Position = UDim2.new(0.05,0,0.42,0)
+	nameColorLabel.Text = "Name Farbe:"
+	nameColorLabel.BackgroundTransparency = 1
+	nameColorLabel.TextColor3 = Color3.new(1,1,1)
+	nameColorLabel.Font = Enum.Font.SourceSansBold
+	nameColorLabel.TextScaled = true
+	nameColorLabel.TextXAlignment = Enum.TextXAlignment.Left
+	nameColorLabel.Parent = panel
+
+	local nameColors = {
+		{name = "Rot", color = Color3.fromRGB(255,0,0), pos = UDim2.new(0.05,0,0.49,0)},
+		{name = "Grün", color = Color3.fromRGB(0,255,0), pos = UDim2.new(0.25,0,0.49,0)},
+		{name = "Blau", color = Color3.fromRGB(0,0,255), pos = UDim2.new(0.45,0,0.49,0)},
+		{name = "Gelb", color = Color3.fromRGB(255,255,0), pos = UDim2.new(0.65,0,0.49,0)},
+		{name = "Pink", color = Color3.fromRGB(255,0,255), pos = UDim2.new(0.85,0,0.49,0)}
+	}
+
+	for _,colorData in pairs(nameColors) do
+		local colorBtn = Instance.new("TextButton")
+		colorBtn.Size = UDim2.new(0.15,0,0.06,0)
+		colorBtn.Position = colorData.pos
+		colorBtn.Text = ""
+		colorBtn.BackgroundColor3 = colorData.color
+		colorBtn.Parent = panel
+
+		local colorCorner = Instance.new("UICorner")
+		colorCorner.CornerRadius = UDim.new(0,4)
+		colorCorner.Parent = colorBtn
+
+		colorBtn.MouseButton1Click:Connect(function()
+			nameColor = colorData.color
+			if nameEnabled then updateNames(true) end
+			showNotification("Name Farbe: " .. colorData.name)
+		end)
+	end
 	
 	-- ESP Info
 	local espInfo = Instance.new("TextLabel")
 	espInfo.Size = UDim2.new(0.9,0,0.2,0)
-	espInfo.Position = UDim2.new(0.05,0,0.4,0)
-	espInfo.Text = "ESP Features:\n• Hitbox zeigt Spieler-Kollisionsboxen\n• Names zeigt Spielernamen über Köpfen\n• Updates automatisch bei neuen Spielern"
+	espInfo.Position = UDim2.new(0.05,0,0.6,0)
+	espInfo.Text = "ESP Features:\n• Hitbox zeigt Spieler-Kollisionsboxen\n• Names zeigt Spielernamen über Köpfen\n• Farben können angepasst werden\n• Updates automatisch bei neuen Spielern"
 	espInfo.BackgroundColor3 = Color3.fromRGB(40,40,40)
 	espInfo.TextColor3 = Color3.new(1,1,1)
 	espInfo.Font = Enum.Font.SourceSans
