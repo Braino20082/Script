@@ -87,7 +87,7 @@ content.Parent = app
 
 -- Panels
 local panels = {}
-local buttonNames = {"Player","Players","ESP","Voice"}
+local buttonNames = {"Player","Spieler","Players","ESP","Voice"}
 local selectedPlayer = nil
 
 for i,name in ipairs(buttonNames) do
