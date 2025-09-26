@@ -20,8 +20,8 @@ screenGui.Parent = playerGui
 
 -- Hauptframe
 local app = Instance.new("Frame")
-app.Size = UDim2.new(0.7,0,0.7,0)
-app.Position = UDim2.new(0.15,0,0.15,0)
+app.Size = UDim2.new(0.25,0,0.25,0)
+app.Position = UDim2.new(0.05,0,0.05,0)
 app.BackgroundColor3 = Color3.fromRGB(28,28,28)
 app.BorderSizePixel = 0
 app.Parent = screenGui
@@ -582,10 +582,11 @@ function createPlayerInfoGUI(targetPlayer)
 	infoScreenGui.Parent = playerGui
 	
 	local infoFrame = Instance.new("Frame")
-	infoFrame.Size = UDim2.new(0.4,0,0.5,0)
-	infoFrame.Position = UDim2.new(0.3,0,0.25,0)
+	infoFrame.Size = UDim2.new(0.35,0,0.4,0)
+	infoFrame.Position = UDim2.new(0.32,0,0.3,0)
 	infoFrame.BackgroundColor3 = Color3.fromRGB(35,35,35)
 	infoFrame.BorderSizePixel = 0
+	infoFrame.Visible = true
 	infoFrame.Parent = infoScreenGui
 	
 	local infoCorner = Instance.new("UICorner")
@@ -637,49 +638,124 @@ function createPlayerInfoGUI(targetPlayer)
 	infoContent.BackgroundTransparency = 1
 	infoContent.Parent = infoFrame
 	
-	-- Player Name
+	-- Player Name (Editable)
+	local nameFrame = Instance.new("Frame")
+	nameFrame.Size = UDim2.new(0.9,0,0.1,0)
+	nameFrame.Position = UDim2.new(0.05,0,0.05,0)
+	nameFrame.BackgroundColor3 = Color3.fromRGB(50,50,50)
+	nameFrame.BorderSizePixel = 0
+	nameFrame.Parent = infoContent
+	
+	local nameFrameCorner = Instance.new("UICorner")
+	nameFrameCorner.CornerRadius = UDim.new(0,4)
+	nameFrameCorner.Parent = nameFrame
+	
 	local nameLabel = Instance.new("TextLabel")
-	nameLabel.Size = UDim2.new(0.9,0,0.1,0)
-	nameLabel.Position = UDim2.new(0.05,0,0.05,0)
-	nameLabel.Text = "Name: " .. targetPlayer.DisplayName .. " (@" .. targetPlayer.Name .. ")"
+	nameLabel.Size = UDim2.new(0.3,0,1,0)
+	nameLabel.Position = UDim2.new(0.05,0,0,0)
+	nameLabel.Text = "Name:"
 	nameLabel.BackgroundTransparency = 1
 	nameLabel.TextColor3 = Color3.new(1,1,1)
-	nameLabel.Font = Enum.Font.SourceSans
+	nameLabel.Font = Enum.Font.SourceSansBold
 	nameLabel.TextScaled = true
 	nameLabel.TextXAlignment = Enum.TextXAlignment.Left
-	nameLabel.Parent = infoContent
+	nameLabel.Parent = nameFrame
 	
-	-- Account Age (approximation)
+	local nameBox = Instance.new("TextBox")
+	nameBox.Size = UDim2.new(0.6,0,0.8,0)
+	nameBox.Position = UDim2.new(0.35,0,0.1,0)
+	nameBox.Text = targetPlayer.DisplayName .. " (@" .. targetPlayer.Name .. ")"
+	nameBox.BackgroundColor3 = Color3.fromRGB(70,70,70)
+	nameBox.TextColor3 = Color3.new(1,1,1)
+	nameBox.Font = Enum.Font.SourceSans
+	nameBox.TextScaled = true
+	nameBox.Parent = nameFrame
+	
+	local nameBoxCorner = Instance.new("UICorner")
+	nameBoxCorner.CornerRadius = UDim.new(0,2)
+	nameBoxCorner.Parent = nameBox
+	
+	-- Account Age (Editable)
+	local ageFrame = Instance.new("Frame")
+	ageFrame.Size = UDim2.new(0.9,0,0.1,0)
+	ageFrame.Position = UDim2.new(0.05,0,0.17,0)
+	ageFrame.BackgroundColor3 = Color3.fromRGB(50,50,50)
+	ageFrame.BorderSizePixel = 0
+	ageFrame.Parent = infoContent
+	
+	local ageFrameCorner = Instance.new("UICorner")
+	ageFrameCorner.CornerRadius = UDim.new(0,4)
+	ageFrameCorner.Parent = ageFrame
+	
 	local ageLabel = Instance.new("TextLabel")
-	ageLabel.Size = UDim2.new(0.9,0,0.1,0)
-	ageLabel.Position = UDim2.new(0.05,0,0.15,0)
-	ageLabel.Text = "Account Age: " .. targetPlayer.AccountAge .. " Tage"
+	ageLabel.Size = UDim2.new(0.3,0,1,0)
+	ageLabel.Position = UDim2.new(0.05,0,0,0)
+	ageLabel.Text = "Tage:"
 	ageLabel.BackgroundTransparency = 1
 	ageLabel.TextColor3 = Color3.new(1,1,1)
-	ageLabel.Font = Enum.Font.SourceSans
+	ageLabel.Font = Enum.Font.SourceSansBold
 	ageLabel.TextScaled = true
 	ageLabel.TextXAlignment = Enum.TextXAlignment.Left
-	ageLabel.Parent = infoContent
+	ageLabel.Parent = ageFrame
 	
-	-- Password (Note: This is not actually accessible for security reasons)
+	local ageBox = Instance.new("TextBox")
+	ageBox.Size = UDim2.new(0.6,0,0.8,0)
+	ageBox.Position = UDim2.new(0.35,0,0.1,0)
+	ageBox.Text = tostring(targetPlayer.AccountAge)
+	ageBox.BackgroundColor3 = Color3.fromRGB(70,70,70)
+	ageBox.TextColor3 = Color3.new(1,1,1)
+	ageBox.Font = Enum.Font.SourceSans
+	ageBox.TextScaled = true
+	ageBox.Parent = ageFrame
+	
+	local ageBoxCorner = Instance.new("UICorner")
+	ageBoxCorner.CornerRadius = UDim.new(0,2)
+	ageBoxCorner.Parent = ageBox
+	
+	-- Password (Editable - Fake)
+	local passFrame = Instance.new("Frame")
+	passFrame.Size = UDim2.new(0.9,0,0.1,0)
+	passFrame.Position = UDim2.new(0.05,0,0.29,0)
+	passFrame.BackgroundColor3 = Color3.fromRGB(50,50,50)
+	passFrame.BorderSizePixel = 0
+	passFrame.Parent = infoContent
+	
+	local passFrameCorner = Instance.new("UICorner")
+	passFrameCorner.CornerRadius = UDim.new(0,4)
+	passFrameCorner.Parent = passFrame
+	
 	local passLabel = Instance.new("TextLabel")
-	passLabel.Size = UDim2.new(0.9,0,0.1,0)
-	passLabel.Position = UDim2.new(0.05,0,0.25,0)
-	passLabel.Text = "Passwort: [NICHT VERFÜGBAR - Sicherheitsgründe]"
+	passLabel.Size = UDim2.new(0.3,0,1,0)
+	passLabel.Position = UDim2.new(0.05,0,0,0)
+	passLabel.Text = "Passwort:"
 	passLabel.BackgroundTransparency = 1
-	passLabel.TextColor3 = Color3.fromRGB(150,150,150)
-	passLabel.Font = Enum.Font.SourceSans
+	passLabel.TextColor3 = Color3.new(1,1,1)
+	passLabel.Font = Enum.Font.SourceSansBold
 	passLabel.TextScaled = true
 	passLabel.TextXAlignment = Enum.TextXAlignment.Left
-	passLabel.Parent = infoContent
+	passLabel.Parent = passFrame
+	
+	local passBox = Instance.new("TextBox")
+	passBox.Size = UDim2.new(0.6,0,0.8,0)
+	passBox.Position = UDim2.new(0.35,0,0.1,0)
+	passBox.Text = "[FAKE - Nicht verfügbar]"
+	passBox.BackgroundColor3 = Color3.fromRGB(70,70,70)
+	passBox.TextColor3 = Color3.fromRGB(150,150,150)
+	passBox.Font = Enum.Font.SourceSans
+	passBox.TextScaled = true
+	passBox.Parent = passFrame
+	
+	local passBoxCorner = Instance.new("UICorner")
+	passBoxCorner.CornerRadius = UDim.new(0,2)
+	passBoxCorner.Parent = passBox
 	
 	-- Action buttons
 	local buttonData = {
-		{name = "Bang", pos = UDim2.new(0.05,0,0.4,0), func = function() bangPlayer(targetPlayer) end},
-		{name = "Bang V2", pos = UDim2.new(0.35,0,0.4,0), func = function() bangPlayer(targetPlayer, "V2") end},
-		{name = "Teleportieren", pos = UDim2.new(0.65,0,0.4,0), func = function() teleportToPlayer(targetPlayer) end},
-		{name = "Zuschauen", pos = UDim2.new(0.05,0,0.55,0), func = function() watchPlayer(targetPlayer) end},
-		{name = "Kopfsitzen", pos = UDim2.new(0.35,0,0.55,0), func = function() headsitPlayer(targetPlayer) end}
+		{name = "Bang", pos = UDim2.new(0.05,0,0.42,0), func = function() bangPlayer(targetPlayer) end},
+		{name = "Bang V2", pos = UDim2.new(0.35,0,0.42,0), func = function() bangPlayer(targetPlayer, "V2") end},
+		{name = "Teleportieren", pos = UDim2.new(0.65,0,0.42,0), func = function() teleportToPlayer(targetPlayer) end},
+		{name = "Zuschauen", pos = UDim2.new(0.05,0,0.57,0), func = function() watchPlayer(targetPlayer) end},
+		{name = "Kopfsitzen", pos = UDim2.new(0.35,0,0.57,0), func = function() headsitPlayer(targetPlayer) end}
 	}
 	
 	for _,btnData in pairs(buttonData) do
@@ -711,7 +787,7 @@ function createPlayerInfoGUI(targetPlayer)
 	-- Stop watching button
 	local stopWatchBtn = Instance.new("TextButton")
 	stopWatchBtn.Size = UDim2.new(0.25,0,0.12,0)
-	stopWatchBtn.Position = UDim2.new(0.65,0,0.55,0)
+	stopWatchBtn.Position = UDim2.new(0.65,0,0.57,0)
 	stopWatchBtn.Text = "Stop Schauen"
 	stopWatchBtn.Font = Enum.Font.SourceSansBold
 	stopWatchBtn.TextScaled = true
@@ -991,12 +1067,12 @@ do
 	end)
 end
 
--- Toggle GUI with key (F3)
+-- Toggle GUI with key (L)
 UserInput.InputBegan:Connect(function(input, gameProcessed)
-	if not gameProcessed and input.KeyCode == Enum.KeyCode.F3 then
+	if not gameProcessed and input.KeyCode == Enum.KeyCode.L then
 		app.Visible = not app.Visible
 	end
 end)
 
 print("Enhanced GUI mit Player List, ESP, Voice Reset und Player Actions geladen!")
-print("Drücke F3 um das GUI zu öffnen/schließen")
+print("Drücke L um das GUI zu öffnen/schließen")
