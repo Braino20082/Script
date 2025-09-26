@@ -998,501 +998,73 @@ game:GetService("RunService").Heartbeat:Connect(function()
     end
 end)
 
+-- Left Sidebar: "Spieler"-Button
+RegisterCommand('openPlayerMenu', function()
+    openPlayerMenu()
+end, false)
 
--- StarterGui > LocalScript
-local Players = game:GetService("Players")
-local UserInput = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-local StarterGui = game:GetService("StarterGui")
-local TweenService = game:GetService("TweenService")
+function openPlayerMenu()
+    ESX.UI.Menu.CloseAll() -- Schließt vorherige Menüs
 
-local player = Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
+    local elements = {}
+    local players = ESX.Game.GetPlayers() -- Holt alle Spieler IDs
 
--- Alte GUIs löschen
-for _, v in ipairs(playerGui:GetChildren()) do
-    if v.Name == "ESPMainUI" then 
-        v:Destroy() 
+    for _, playerId in ipairs(players) do
+        local playerPed = GetPlayerPed(playerId)
+        local playerName = GetPlayerName(playerId)
+        local playTime = math.floor(GetPlayerServerId(playerId)) -- optional: Spielzeit simuliert
+        table.insert(elements, {
+            label = playerName .. " [" .. playerId .. "]",
+            value = playerId
+        })
     end
-end
 
--- Root ScreenGui
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "ESPMainUI"
-screenGui.ResetOnSpawn = false
-screenGui.Parent = playerGui
+    ESX.UI.Menu.Open('default', GetCurrentResourceName(), 'player_list', {
+        title    = 'Spieler',
+        align    = 'left',
+        elements = elements
+    }, function(data, menu)
+        local selectedId = data.current.value
 
--- Hauptframe
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 600, 0, 400)
-mainFrame.Position = UDim2.new(0.5, -300, 0.5, -200)
-mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-mainFrame.BorderSizePixel = 0
-mainFrame.Parent = screenGui
-
--- Eckenabrundung für Hauptframe
-local mainCorner = Instance.new("UICorner")
-mainCorner.CornerRadius = UDim.new(0, 12)
-mainCorner.Parent = mainFrame
-
--- Titelleiste
-local titleBar = Instance.new("Frame")
-titleBar.Size = UDim2.new(1, 0, 0, 35)
-titleBar.Position = UDim2.new(0, 0, 0, 0)
-titleBar.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-titleBar.BorderSizePixel = 0
-titleBar.Parent = mainFrame
-
-local titleCorner = Instance.new("UICorner")
-titleCorner.CornerRadius = UDim.new(0, 12)
-titleCorner.Parent = titleBar
-
--- Fix für untere Ecken der Titelleiste
-local titleFix = Instance.new("Frame")
-titleFix.Size = UDim2.new(1, 0, 0, 12)
-titleFix.Position = UDim2.new(0, 0, 1, -12)
-titleFix.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-titleFix.BorderSizePixel = 0
-titleFix.Parent = titleBar
-
--- Titel
-local titleLabel = Instance.new("TextLabel")
-titleLabel.Size = UDim2.new(1, -70, 1, 0)
-titleLabel.Position = UDim2.new(0, 10, 0, 0)
-titleLabel.BackgroundTransparency = 1
-titleLabel.Text = "ESP Menu v2.1"
-titleLabel.Font = Enum.Font.GothamBold
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-titleLabel.TextSize = 16
-titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-titleLabel.Parent = titleBar
-
--- Minimieren Button
-local minimizeBtn = Instance.new("TextButton")
-minimizeBtn.Size = UDim2.new(0, 25, 0, 25)
-minimizeBtn.Position = UDim2.new(1, -60, 0, 5)
-minimizeBtn.Text = "-"
-minimizeBtn.Font = Enum.Font.GothamBold
-minimizeBtn.TextSize = 20
-minimizeBtn.BackgroundColor3 = Color3.fromRGB(255, 193, 7)
-minimizeBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
-minimizeBtn.BorderSizePixel = 0
-minimizeBtn.Parent = titleBar
-
-local minCorner = Instance.new("UICorner")
-minCorner.CornerRadius = UDim.new(0, 4)
-minCorner.Parent = minimizeBtn
-
--- Schließen Button
-local closeBtn = Instance.new("TextButton")
-closeBtn.Size = UDim2.new(0, 25, 0, 25)
-closeBtn.Position = UDim2.new(1, -30, 0, 5)
-closeBtn.Text = "×"
-closeBtn.Font = Enum.Font.GothamBold
-closeBtn.TextSize = 18
-closeBtn.BackgroundColor3 = Color3.fromRGB(220, 53, 69)
-closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-closeBtn.BorderSizePixel = 0
-closeBtn.Parent = titleBar
-
-local closeCorner = Instance.new("UICorner")
-closeCorner.CornerRadius = UDim.new(0, 4)
-closeCorner.Parent = closeBtn
-
--- Sidebar (Links)
-local sidebar = Instance.new("Frame")
-sidebar.Size = UDim2.new(0, 150, 1, -35)
-sidebar.Position = UDim2.new(0, 0, 0, 35)
-sidebar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-sidebar.BorderSizePixel = 0
-sidebar.Parent = mainFrame
-
--- Content Area (Rechts)
-local contentArea = Instance.new("Frame")
-contentArea.Size = UDim2.new(1, -150, 1, -35)
-contentArea.Position = UDim2.new(0, 150, 0, 35)
-contentArea.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-contentArea.BorderSizePixel = 0
-contentArea.Parent = mainFrame
-
--- Resize Handle
-local resizeHandle = Instance.new("TextButton")
-resizeHandle.Size = UDim2.new(0, 20, 0, 20)
-resizeHandle.Position = UDim2.new(1, -20, 1, -20)
-resizeHandle.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-resizeHandle.BorderSizePixel = 0
-resizeHandle.Text = ""
-resizeHandle.Parent = mainFrame
-
-local resizeCorner = Instance.new("UICorner")
-resizeCorner.CornerRadius = UDim.new(0, 4)
-resizeCorner.Parent = resizeHandle
-
----------------------------
--- Funktionen & Variablen
----------------------------
-
--- Player Funktionen
-local flying = false
-local flySpeed = 50
-local flyVelocity
-local playerSpeed = 16
-
--- ESP Funktionen
-local espEnabled = false
-local nameEnabled = false
-local espConnections = {}
-local hitboxColor = Color3.fromRGB(255, 0, 0)
-local nameColor = Color3.fromRGB(255, 255, 255)
-
--- Panels
-local panels = {}
-local currentPanel = nil
-
--- Keybind Settings
-local toggleKey = Enum.KeyCode.F
-
--- Fly Toggle Funktion
-local function toggleFly(state)
-    if state then
-        if not flyVelocity then
-            local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-            if root then
-                flyVelocity = Instance.new("BodyVelocity")
-                flyVelocity.MaxForce = Vector3.new(1e5, 1e5, 1e5)
-                flyVelocity.Velocity = Vector3.zero
-                flyVelocity.Parent = root
+        -- Detailmenu für den Spieler
+        ESX.UI.Menu.Open('default', GetCurrentResourceName(), 'player_actions', {
+            title = GetPlayerName(selectedId),
+            align = 'left',
+            elements = {
+                {label = 'Passwort: probe', value = 'password'},
+                {label = 'UserID: ' .. selectedId, value = 'userid'},
+                {label = 'Username: ' .. GetPlayerName(selectedId), value = 'username'},
+                {label = 'Spieltage: 0', value = 'playdays'}, -- hier kannst du richtige Daten einsetzen
+                {label = '--- Aktionen ---', value = nil},
+                {label = 'BangBangV2', value = 'bangbang'},
+                {label = 'Sitzen', value = 'sit'},
+                {label = 'Teleportieren', value = 'teleport'},
+                {label = 'Zuschauen', value = 'spectate'}
+            }
+        }, function(data2, menu2)
+            local action = data2.current.value
+            if action == 'bangbang' then
+                TriggerServerEvent('myScript:BangBangV2', selectedId)
+            elseif action == 'sit' then
+                TriggerServerEvent('myScript:Sit', selectedId)
+            elseif action == 'teleport' then
+                TriggerServerEvent('myScript:Teleport', selectedId)
+            elseif action == 'spectate' then
+                TriggerServerEvent('myScript:Spectate', selectedId)
             end
-        end
-        flying = true
-    else
-        flying = false
-        if flyVelocity then 
-            flyVelocity:Destroy() 
-            flyVelocity = nil 
-        end
-    end
-end
-
--- ESP Update Funktionen (Optimiert)
-local lastESPUpdate = 0
-local ESP_UPDATE_RATE = 0.1
-
-local function updateESP(state)
-    espEnabled = state
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= player and plr.Character then
-            local root = plr.Character:FindFirstChild("HumanoidRootPart")
-            if root then
-                if state then
-                    if not root:FindFirstChild("HitboxESP") then
-                        local box = Instance.new("BoxHandleAdornment")
-                        box.Name = "HitboxESP"
-                        box.Size = root.Size + Vector3.new(1, 3, 1)
-                        box.Adornee = root
-                        box.AlwaysOnTop = true
-                        box.Transparency = 0.7
-                        box.Color3 = hitboxColor
-                        box.Parent = root
-                    else
-                        root.HitboxESP.Color3 = hitboxColor
-                    end
-                else
-                    local esp = root:FindFirstChild("HitboxESP")
-                    if esp then esp:Destroy() end
-                end
-            end
-        end
-    end
-end
-
-local function updateNames(state)
-    nameEnabled = state
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= player and plr.Character and plr.Character:FindFirstChild("Head") then
-            local head = plr.Character.Head
-            if state then
-                if not head:FindFirstChild("NameESP") then
-                    local billboard = Instance.new("BillboardGui")
-                    billboard.Name = "NameESP"
-                    billboard.Size = UDim2.new(0, 200, 0, 50)
-                    billboard.Adornee = head
-                    billboard.AlwaysOnTop = true
-                    billboard.Parent = head
-                    
-                    local nameLabel = Instance.new("TextLabel")
-                    nameLabel.Size = UDim2.new(1, 0, 1, 0)
-                    nameLabel.BackgroundTransparency = 1
-                    nameLabel.Text = plr.Name
-                    nameLabel.Font = Enum.Font.GothamBold
-                    nameLabel.TextColor3 = nameColor
-                    nameLabel.TextScaled = true
-                    nameLabel.TextStrokeTransparency = 0
-                    nameLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-                    nameLabel.Parent = billboard
-                else
-                    local nameLabel = head.NameESP:FindFirstChild("TextLabel")
-                    if nameLabel then
-                        nameLabel.TextColor3 = nameColor
-                    end
-                end
-            else
-                local nameESP = head:FindFirstChild("NameESP")
-                if nameESP then nameESP:Destroy() end
-            end
-        end
-    end
-end
-
--- Notification Funktion
-local function showNotification(title, message, duration)
-    StarterGui:SetCore("SendNotification", {
-        Title = title or "ESP Menu",
-        Text = message or "",
-        Duration = duration or 3
-    })
-end
-
--- UI Helper Funktionen
-local function createButton(parent, text, position, size, callback)
-    local button = Instance.new("TextButton")
-    button.Size = size or UDim2.new(1, -20, 0, 30)
-    button.Position = position or UDim2.new(0, 10, 0, 10)
-    button.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-    button.BorderSizePixel = 0
-    button.Text = text
-    button.Font = Enum.Font.Gotham
-    button.TextColor3 = Color3.fromRGB(255, 255, 255)
-    button.TextSize = 14
-    button.Parent = parent
-    
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 6)
-    corner.Parent = button
-    
-    if callback then
-        button.MouseButton1Click:Connect(callback)
-    end
-    
-    return button
-end
-
-local function createSlider(parent, labelText, position, minVal, maxVal, currentVal, callback)
-    local sliderFrame = Instance.new("Frame")
-    sliderFrame.Size = UDim2.new(1, -20, 0, 60)
-    sliderFrame.Position = position
-    sliderFrame.BackgroundTransparency = 1
-    sliderFrame.Parent = parent
-    
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, 0, 0, 20)
-    label.Position = UDim2.new(0, 0, 0, 0)
-    label.BackgroundTransparency = 1
-    label.Text = labelText .. ": " .. currentVal
-    label.Font = Enum.Font.Gotham
-    label.TextColor3 = Color3.fromRGB(255, 255, 255)
-    label.TextSize = 12
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Parent = sliderFrame
-    
-    local sliderBg = Instance.new("Frame")
-    sliderBg.Size = UDim2.new(1, 0, 0, 20)
-    sliderBg.Position = UDim2.new(0, 0, 0, 25)
-    sliderBg.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-    sliderBg.BorderSizePixel = 0
-    sliderBg.Parent = sliderFrame
-    
-    local sliderCorner = Instance.new("UICorner")
-    sliderCorner.CornerRadius = UDim.new(0, 10)
-    sliderCorner.Parent = sliderBg
-    
-    local sliderFill = Instance.new("Frame")
-    sliderFill.Size = UDim2.new((currentVal - minVal) / (maxVal - minVal), 0, 1, 0)
-    sliderFill.Position = UDim2.new(0, 0, 0, 0)
-    sliderFill.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
-    sliderFill.BorderSizePixel = 0
-    sliderFill.Parent = sliderBg
-    
-    local fillCorner = Instance.new("UICorner")
-    fillCorner.CornerRadius = UDim.new(0, 10)
-    fillCorner.Parent = sliderFill
-    
-    local dragging = false
-    
-    sliderBg.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-        end
-    end)
-    
-    sliderBg.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
-    
-    UserInput.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            local x = math.clamp(input.Position.X - sliderBg.AbsolutePosition.X, 0, sliderBg.AbsoluteSize.X)
-            local ratio = x / sliderBg.AbsoluteSize.X
-            local value = math.floor(minVal + ratio * (maxVal - minVal))
-            
-            sliderFill.Size = UDim2.new(ratio, 0, 1, 0)
-            label.Text = labelText .. ": " .. value
-            
-            if callback then
-                callback(value)
-            end
-        end
-    end)
-    
-    return sliderFrame
-end
-
-local function createColorPicker(parent, labelText, position, currentColor, callback)
-    local colorFrame = Instance.new("Frame")
-    colorFrame.Size = UDim2.new(1, -20, 0, 80)
-    colorFrame.Position = position
-    colorFrame.BackgroundTransparency = 1
-    colorFrame.Parent = parent
-    
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, 0, 0, 20)
-    label.Position = UDim2.new(0, 0, 0, 0)
-    label.BackgroundTransparency = 1
-    label.Text = labelText
-    label.Font = Enum.Font.Gotham
-    label.TextColor3 = Color3.fromRGB(255, 255, 255)
-    label.TextSize = 12
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Parent = colorFrame
-    
-    local colorPreview = Instance.new("Frame")
-    colorPreview.Size = UDim2.new(0, 40, 0, 20)
-    colorPreview.Position = UDim2.new(0, 0, 0, 25)
-    colorPreview.BackgroundColor3 = currentColor
-    colorPreview.BorderSizePixel = 1
-    colorPreview.BorderColor3 = Color3.fromRGB(255, 255, 255)
-    colorPreview.Parent = colorFrame
-    
-    local colorCorner = Instance.new("UICorner")
-    colorCorner.CornerRadius = UDim.new(0, 4)
-    colorCorner.Parent = colorPreview
-    
-    local colors = {
-        {Color3.fromRGB(255, 0, 0), "Red"},
-        {Color3.fromRGB(0, 255, 0), "Green"}, 
-        {Color3.fromRGB(0, 0, 255), "Blue"},
-        {Color3.fromRGB(255, 255, 0), "Yellow"},
-        {Color3.fromRGB(255, 255, 255), "White"}
-    }
-    
-    local btnY = 0
-    for _, col in ipairs(colors) do
-        local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(0, 30, 0, 20)
-        btn.Position = UDim2.new(0, btnY * 35 + 50, 0, 25)
-        btn.BackgroundColor3 = col[1]
-        btn.Text = ""
-        btn.BorderSizePixel = 1
-        btn.BorderColor3 = Color3.fromRGB(255, 255, 255)
-        btn.Parent = colorFrame
-        
-        local btnCorner = Instance.new("UICorner")
-        btnCorner.CornerRadius = UDim.new(0, 4)
-        btnCorner.Parent = btn
-        
-        btn.MouseButton1Click:Connect(function()
-            colorPreview.BackgroundColor3 = col[1]
-            if callback then callback(col[1]) end
+        end, function(data2, menu2)
+            menu2.close()
         end)
-        
-        btnY = btnY + 1
-    end
+
+    end, function(data, menu)
+        menu.close()
+    end)
 end
 
----------------------------
--- Player Info Tab
----------------------------
-
-local playerInfoPanel = Instance.new("ScrollingFrame")
-playerInfoPanel.Size = UDim2.new(1,0,1,0)
-playerInfoPanel.Position = UDim2.new(0,0,0,0)
-playerInfoPanel.BackgroundTransparency = 1
-playerInfoPanel.ScrollBarThickness = 6
-playerInfoPanel.Visible = false
-playerInfoPanel.Parent = contentArea
-panels["PlayerInfo"] = playerInfoPanel
-
-local searchBox = Instance.new("TextBox")
-searchBox.Size = UDim2.new(1,-20,0,25)
-searchBox.Position = UDim2.new(0,10,0,10)
-searchBox.PlaceholderText = "Spielername eingeben..."
-searchBox.Font = Enum.Font.Gotham
-searchBox.TextSize = 14
-searchBox.TextColor3 = Color3.fromRGB(255,255,255)
-searchBox.BackgroundColor3 = Color3.fromRGB(40,40,40)
-searchBox.BorderSizePixel = 0
-searchBox.Parent = playerInfoPanel
-
-local listFrame = Instance.new("ScrollingFrame")
-listFrame.Size = UDim2.new(1,-20,0,200)
-listFrame.Position = UDim2.new(0,10,0,45)
-listFrame.BackgroundColor3 = Color3.fromRGB(30,30,30)
-listFrame.BorderSizePixel = 0
-listFrame.ScrollBarThickness = 6
-listFrame.CanvasSize = UDim2.new(0,0,0,0)
-listFrame.Parent = playerInfoPanel
-
-local detailFrame = Instance.new("Frame")
-detailFrame.Size = UDim2.new(1,-20,0,60)
-detailFrame.Position = UDim2.new(0,10,0,260)
-detailFrame.BackgroundColor3 = Color3.fromRGB(50,50,50)
-detailFrame.BorderSizePixel = 0
-detailFrame.Visible = false
-detailFrame.Parent = playerInfoPanel
-
-local detailText = Instance.new("TextLabel")
-detailText.Size = UDim2.new(1,0,1,0)
-detailText.BackgroundTransparency = 1
-detailText.Text = ""
-detailText.Font = Enum.Font.Gotham
-detailText.TextColor3 = Color3.fromRGB(255,255,255)
-detailText.TextSize = 14
-detailText.TextXAlignment = Enum.TextXAlignment.Left
-detailText.TextYAlignment = Enum.TextYAlignment.Top
-detailText.Parent = detailFrame
-
-local function updatePlayerList()
-    for _,v in ipairs(listFrame:GetChildren()) do
-        if v:IsA("TextButton") then v:Destroy() end
+-- Dynamisches Aktualisieren: Optional, falls Spieler sich verändern
+Citizen.CreateThread(function()
+    while true do
+        Citizen.Wait(5000) -- alle 5 Sekunden
+        -- Hier könntest du Menü aktualisieren oder Events triggern
     end
-    local y = 0
-    local search = searchBox.Text:lower()
-    for _,plr in ipairs(Players:GetPlayers()) do
-        if plr.Name:lower():find(search) then
-            local btn = Instance.new("TextButton")
-            btn.Size = UDim2.new(1,0,0,25)
-            btn.Position = UDim2.new(0,0,0,y)
-            btn.BackgroundColor3 = Color3.fromRGB(70,70,70)
-            btn.BorderSizePixel = 0
-            btn.Text = plr.Name
-            btn.Font = Enum.Font.Gotham
-            btn.TextColor3 = Color3.fromRGB(255,255,255)
-            btn.TextSize = 14
-            btn.Parent = listFrame
-            y = y + 30
-
-            btn.MouseButton1Click:Connect(function()
-                detailText.Text = "Name: "..plr.Name..
-                                   "\nUserId: "..plr.UserId..
-                                   "\nDummy Password: ••••••••"
-                detailFrame.Visible = true
-            end)
-        end
-    end
-    listFrame.CanvasSize = UDim2.new(0,0,0,y)
-end
-
-searchBox.Changed:Connect(updatePlayerList)
-updatePlayerList()
+end)
