@@ -681,27 +681,33 @@ end
 
 -- Player Info GUI Function
 function createPlayerInfoGUI(targetPlayer)
+	if not targetPlayer or not targetPlayer.Parent then
+		print("Ungültiger Spieler")
+		return
+	end
+	
 	-- Remove existing player info GUI
 	local existingGui = playerGui:FindFirstChild("PlayerInfoUI")
 	if existingGui then existingGui:Destroy() end
 	
 	-- Wait a moment to ensure cleanup
-	wait(0.1)
-	
-	-- Create new GUI
-	local infoScreenGui = Instance.new("ScreenGui")
-	infoScreenGui.Name = "PlayerInfoUI"
-	infoScreenGui.ResetOnSpawn = false
-	infoScreenGui.Parent = playerGui
-	
-	local infoFrame = Instance.new("Frame")
-	infoFrame.Size = UDim2.new(0,400,0,300)
-	infoFrame.Position = UDim2.new(0.5,-200,0.5,-150)
-	infoFrame.BackgroundColor3 = Color3.fromRGB(35,35,35)
-	infoFrame.BorderSizePixel = 0
-	infoFrame.Visible = true
-	infoFrame.Active = true
-	infoFrame.Parent = infoScreenGui
+	spawn(function()
+		wait(0.1)
+		
+		-- Create new GUI
+		local infoScreenGui = Instance.new("ScreenGui")
+		infoScreenGui.Name = "PlayerInfoUI"
+		infoScreenGui.ResetOnSpawn = false
+		infoScreenGui.Parent = playerGui
+		
+		local infoFrame = Instance.new("Frame")
+		infoFrame.Size = UDim2.new(0,400,0,300)
+		infoFrame.Position = UDim2.new(0.5,-200,0.5,-150)
+		infoFrame.BackgroundColor3 = Color3.fromRGB(35,35,35)
+		infoFrame.BorderSizePixel = 0
+		infoFrame.Visible = true
+		infoFrame.Active = true
+		infoFrame.Parent = infoScreenGui
 	
 	local infoCorner = Instance.new("UICorner")
 	infoCorner.CornerRadius = UDim.new(0,8)
