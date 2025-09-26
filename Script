@@ -1,4 +1,4 @@
--- StarterGui > LocalScript - FIXED VERSION
+-- StarterGui > LocalScript
 local Players = game:GetService("Players")
 local UserInput = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -6,7 +6,7 @@ local StarterGui = game:GetService("StarterGui")
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- Clean old GUIs
+-- alte GUIs löschen
 for _,v in ipairs(playerGui:GetChildren()) do
 	if v.Name == "CustomMainUI" then v:Destroy() end
 end
@@ -17,7 +17,7 @@ screenGui.Name = "CustomMainUI"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = playerGui
 
--- Main frame
+-- Hauptframe (25% des Bildschirms)
 local app = Instance.new("Frame")
 app.Size = UDim2.new(0.25,0,0.3,0)
 app.Position = UDim2.new(0.375,0,0.35,0)
@@ -107,25 +107,33 @@ for i,name in ipairs(buttonNames) do
 		panel.Visible = true
 	end)
 end
-panels["Player"].Visible = true
+if panels["Player"] then panels["Player"].Visible = true end
 
--- Color variables
+---------------------------
+-- Farbvariablen
+---------------------------
 local hitboxColor = Color3.fromRGB(255,0,0)
 local nameColor = Color3.fromRGB(255,255,255)
 
--- Fly system
+---------------------------
+-- Funktionen
+---------------------------
+
+-- Fly Variablen
 local flying = false
 local flySpeed = 50
 local flyVelocity
 
 local function toggleFly(state)
 	if state then
-		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-		if root and not flyVelocity then
-			flyVelocity = Instance.new("BodyVelocity")
-			flyVelocity.MaxForce = Vector3.new(1e5,1e5,1e5)
-			flyVelocity.Velocity = Vector3.zero
-			flyVelocity.Parent = root
+		if not flyVelocity then
+			local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+			if root then
+				flyVelocity = Instance.new("BodyVelocity")
+				flyVelocity.MaxForce = Vector3.new(1e5,1e5,1e5)
+				flyVelocity.Velocity = Vector3.zero
+				flyVelocity.Parent = root
+			end
 		end
 		flying = true
 	else
@@ -134,7 +142,19 @@ local function toggleFly(state)
 	end
 end
 
--- ESP system
+-- Noclip
+local noclip = false
+RunService.RenderStepped:Connect(function()
+	if noclip and player.Character then
+		for _,part in pairs(player.Character:GetChildren()) do
+			if part:IsA("BasePart") then
+				part.CanCollide = false
+			end
+		end
+	end
+end)
+
+-- ESP Hitbox / Name
 local espEnabled = false
 local nameEnabled = false
 
@@ -156,8 +176,9 @@ local function updateESP(state)
 						box.Parent = root
 					end
 				else
-					local esp = root:FindFirstChild("HitboxESP")
-					if esp then esp:Destroy() end
+					if root:FindFirstChild("HitboxESP") then
+						root.HitboxESP:Destroy()
+					end
 				end
 			end
 		end
@@ -167,70 +188,72 @@ end
 local function updateNames(state)
 	nameEnabled = state
 	for _,plr in ipairs(Players:GetPlayers()) do
-		if plr ~= player and plr.Character then
-			local head = plr.Character:FindFirstChild("Head")
-			if head then
-				if state then
-					if not head:FindFirstChild("NameESP") then
-						local tag = Instance.new("BillboardGui")
-						tag.Name = "NameESP"
-						tag.Size = UDim2.new(0,100,0,50)
-						tag.AlwaysOnTop = true
-						tag.Adornee = head
-						tag.Parent = head
-						local text = Instance.new("TextLabel")
-						text.Size = UDim2.new(1,0,1,0)
-						text.BackgroundTransparency = 1
-						text.Text = plr.Name
-						text.Font = Enum.Font.SourceSansBold
-						text.TextScaled = true
-						text.TextColor3 = nameColor
-						text.Parent = tag
-					end
-				else
-					local esp = head:FindFirstChild("NameESP")
-					if esp then esp:Destroy() end
+		if plr ~= player and plr.Character and plr.Character:FindFirstChild("Head") then
+			local head = plr.Character.Head
+			if state then
+				if not head:FindFirstChild("NameESP") then
+					local tag = Instance.new("BillboardGui")
+					tag.Name = "NameESP"
+					tag.Size = UDim2.new(0,100,0,50)
+					tag.AlwaysOnTop = true
+					tag.Adornee = head
+					tag.Parent = head
+					local text = Instance.new("TextLabel")
+					text.Size = UDim2.new(1,0,1,0)
+					text.BackgroundTransparency = 1
+					text.Text = plr.Name
+					text.Font = Enum.Font.SourceSansBold
+					text.TextScaled = true
+					text.TextColor3 = nameColor
+					text.Parent = tag
+				end
+			else
+				if head:FindFirstChild("NameESP") then
+					head.NameESP:Destroy()
 				end
 			end
 		end
 	end
 end
 
-local function updateColors()
+-- Farben aktualisieren
+local function updateHitboxColor()
 	for _,plr in ipairs(Players:GetPlayers()) do
-		if plr ~= player and plr.Character then
-			local root = plr.Character:FindFirstChild("HumanoidRootPart")
-			local head = plr.Character:FindFirstChild("Head")
-			if root then
-				local box = root:FindFirstChild("HitboxESP")
-				if box then box.Color3 = hitboxColor end
-			end
-			if head then
-				local tag = head:FindFirstChild("NameESP")
-				if tag and tag:FindFirstChildOfClass("TextLabel") then
-					tag:FindFirstChildOfClass("TextLabel").TextColor3 = nameColor
-				end
+		if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+			local box = plr.Character.HumanoidRootPart:FindFirstChild("HitboxESP")
+			if box then
+				box.Color3 = hitboxColor
 			end
 		end
 	end
 end
 
+local function updateNameColor()
+	for _,plr in ipairs(Players:GetPlayers()) do
+		if plr ~= player and plr.Character and plr.Character:FindFirstChild("Head") then
+			local tag = plr.Character.Head:FindFirstChild("NameESP")
+			if tag and tag:FindFirstChildOfClass("TextLabel") then
+				tag:FindFirstChildOfClass("TextLabel").TextColor3 = nameColor
+			end
+		end
+	end
+end
+
+-- Voice Fake "Unban"
 local function showNotification(msg)
 	StarterGui:SetCore("SendNotification", {
-		Title = "Custom Menu",
+		Title = "Voice System",
 		Text = msg,
 		Duration = 3
 	})
 end
 
--- Player speed
+-- Fly + Player Speed
 local playerSpeed = 16
 RunService.RenderStepped:Connect(function()
-	if player.Character then
-		local humanoid = player.Character:FindFirstChild("Humanoid")
-		if humanoid then humanoid.WalkSpeed = playerSpeed end
+	if player.Character and player.Character:FindFirstChild("Humanoid") then
+		player.Character.Humanoid.WalkSpeed = playerSpeed
 	end
-	
 	if flying and flyVelocity and player.Character then
 		local root = player.Character:FindFirstChild("HumanoidRootPart")
 		if root then
@@ -239,13 +262,45 @@ RunService.RenderStepped:Connect(function()
 			if UserInput:IsKeyDown(Enum.KeyCode.S) then move = move - workspace.CurrentCamera.CFrame.LookVector end
 			if UserInput:IsKeyDown(Enum.KeyCode.A) then move = move - workspace.CurrentCamera.CFrame.RightVector end
 			if UserInput:IsKeyDown(Enum.KeyCode.D) then move = move + workspace.CurrentCamera.CFrame.RightVector end
-			flyVelocity.Velocity = move.Magnitude > 0 and move.Unit * flySpeed or Vector3.zero
+			if move.Magnitude == 0 then
+				flyVelocity.Velocity = Vector3.new(0,0,0)
+			else
+				flyVelocity.Velocity = move.Unit * flySpeed
+			end
 		end
 	end
 end)
 
--- Player Info GUI
+-- Hilfsfunktion für Farbbuttons
+local function createColorButton(parent, position, currentColor, callback)
+	local colorFrame = Instance.new("Frame")
+	colorFrame.Size = UDim2.new(0.08,0,0.08,0)
+	colorFrame.Position = position
+	colorFrame.BackgroundColor3 = currentColor
+	colorFrame.BorderSizePixel = 1
+	colorFrame.BorderColor3 = Color3.new(1,1,1)
+	colorFrame.Parent = parent
+	
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0,4)
+	corner.Parent = colorFrame
+	
+	local colorBtn = Instance.new("TextButton")
+	colorBtn.Size = UDim2.new(1,0,1,0)
+	colorBtn.BackgroundTransparency = 1
+	colorBtn.Text = ""
+	colorBtn.Parent = colorFrame
+	
+	colorBtn.MouseButton1Click:Connect(callback)
+	
+	return colorFrame
+end
+
+---------------------------
+-- Player Info GUI Function (UPDATED)
+---------------------------
 local function createPlayerInfoGUI(targetPlayer)
+	-- Remove existing player info GUI
 	for _,v in ipairs(playerGui:GetChildren()) do
 		if v.Name == "PlayerInfoGUI" then v:Destroy() end
 	end
@@ -256,15 +311,15 @@ local function createPlayerInfoGUI(targetPlayer)
 	infoGui.Parent = playerGui
 	
 	local infoFrame = Instance.new("Frame")
-	infoFrame.Size = UDim2.new(0.4,0,0.7,0)
-	infoFrame.Position = UDim2.new(0.3,0,0.15,0)
+	infoFrame.Size = UDim2.new(0.35,0,0.6,0)
+	infoFrame.Position = UDim2.new(0.325,0,0.2,0)
 	infoFrame.BackgroundColor3 = Color3.fromRGB(28,28,28)
 	infoFrame.BorderSizePixel = 0
 	infoFrame.Parent = infoGui
 	
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0,8)
-	corner.Parent = infoFrame
+	local infoCorner = Instance.new("UICorner")
+	infoCorner.CornerRadius = UDim.new(0,8)
+	infoCorner.Parent = infoFrame
 	
 	-- Title bar
 	local titleBar = Instance.new("Frame")
@@ -282,241 +337,305 @@ local function createPlayerInfoGUI(targetPlayer)
 	titleLabel.TextScaled = true
 	titleLabel.Parent = titleBar
 	
-	local closeBtn = Instance.new("TextButton")
-	closeBtn.Size = UDim2.new(0.1,0,0.8,0)
-	closeBtn.Position = UDim2.new(0.9,0,0.1,0)
-	closeBtn.Text = "X"
-	closeBtn.Font = Enum.Font.SourceSansBold
-	closeBtn.TextScaled = true
-	closeBtn.BackgroundColor3 = Color3.fromRGB(150,50,50)
-	closeBtn.TextColor3 = Color3.new(1,1,1)
-	closeBtn.Parent = titleBar
-	closeBtn.MouseButton1Click:Connect(function() infoGui:Destroy() end)
+	-- Close button
+	local closeInfoBtn = Instance.new("TextButton")
+	closeInfoBtn.Size = UDim2.new(0.1,0,0.8,0)
+	closeInfoBtn.Position = UDim2.new(0.9,0,0.1,0)
+	closeInfoBtn.Text = "X"
+	closeInfoBtn.Font = Enum.Font.SourceSansBold
+	closeInfoBtn.TextScaled = true
+	closeInfoBtn.BackgroundColor3 = Color3.fromRGB(150,50,50)
+	closeInfoBtn.TextColor3 = Color3.new(1,1,1)
+	closeInfoBtn.Parent = titleBar
+	closeInfoBtn.MouseButton1Click:Connect(function()
+		infoGui:Destroy()
+	end)
 	
-	-- Info section
+	-- TOP HALF - Player Info
 	local infoSection = Instance.new("ScrollingFrame")
 	infoSection.Size = UDim2.new(1,-20,0.46,-10)
 	infoSection.Position = UDim2.new(0,10,0.08,5)
 	infoSection.BackgroundColor3 = Color3.fromRGB(35,35,35)
 	infoSection.BorderSizePixel = 0
-	infoSection.ScrollBarThickness = 8
+	infoSection.ScrollBarThickness = 6
 	infoSection.Parent = infoFrame
 	
-	local corner2 = Instance.new("UICorner")
-	corner2.CornerRadius = UDim.new(0,6)
-	corner2.Parent = infoSection
+	local infoCorner2 = Instance.new("UICorner")
+	infoCorner2.CornerRadius = UDim.new(0,6)
+	infoCorner2.Parent = infoSection
 	
-	-- Function section
-	local functionSection = Instance.new("ScrollingFrame")
+	-- BOTTOM HALF - Functions
+	local functionSection = Instance.new("Frame")
 	functionSection.Size = UDim2.new(1,-20,0.46,-10)
 	functionSection.Position = UDim2.new(0,10,0.54,5)
 	functionSection.BackgroundColor3 = Color3.fromRGB(35,35,35)
 	functionSection.BorderSizePixel = 0
-	functionSection.ScrollBarThickness = 8
 	functionSection.Parent = infoFrame
 	
-	local corner3 = Instance.new("UICorner")
-	corner3.CornerRadius = UDim.new(0,6)
-	corner3.Parent = functionSection
+	local functionCorner = Instance.new("UICorner")
+	functionCorner.CornerRadius = UDim.new(0,6)
+	functionCorner.Parent = functionSection
 	
-	-- Function title
+	-- Function section title
 	local funcTitle = Instance.new("TextLabel")
-	funcTitle.Size = UDim2.new(1,0,0,30)
+	funcTitle.Size = UDim2.new(1,0,0.15,0)
 	funcTitle.Position = UDim2.new(0,0,0,0)
 	funcTitle.Text = "Player Functions"
 	funcTitle.BackgroundTransparency = 1
 	funcTitle.TextColor3 = Color3.fromRGB(255,255,100)
 	funcTitle.Font = Enum.Font.SourceSansBold
-	funcTitle.TextSize = 16
+	funcTitle.TextScaled = true
 	funcTitle.Parent = functionSection
 	
-	-- Generate password
-	local function genPass()
-		local chars = "abcdefghijklmnopqrstuvwxyz0123456789"
-		local pass = ""
-		for i = 1, math.random(8,12) do
-			pass = pass .. chars:sub(math.random(1,#chars),math.random(1,#chars))
-		end
-		return pass
-	end
+	local yOffset = 0
 	
-	-- Add info labels
-	local yPos = 0
-	local function addInfo(title, value, color)
+	-- Helper function to add info labels
+	local function addInfoLabel(title, value, color)
 		local label = Instance.new("TextLabel")
-		label.Size = UDim2.new(1,-10,0,35)
-		label.Position = UDim2.new(0,5,0,yPos)
+		label.Size = UDim2.new(1,-10,0,25)
+		label.Position = UDim2.new(0,5,0,yOffset)
 		label.BackgroundTransparency = 1
 		label.Text = title .. ": " .. tostring(value)
 		label.Font = Enum.Font.SourceSans
 		label.TextColor3 = color or Color3.new(1,1,1)
-		label.TextSize = 14
+		label.TextSize = 12
 		label.TextXAlignment = Enum.TextXAlignment.Left
 		label.Parent = infoSection
-		yPos = yPos + 38
+		yOffset = yOffset + 28
+		return label
 	end
 	
-	-- Avatar
-	local avatar = Instance.new("ImageLabel")
-	avatar.Size = UDim2.new(0,120,0,120)
-	avatar.Position = UDim2.new(0.5,-60,0,yPos)
-	avatar.BackgroundColor3 = Color3.fromRGB(60,60,60)
-	avatar.BorderSizePixel = 0
-	avatar.Image = "https://www.roblox.com/headshot-thumbnail/image?userId="..targetPlayer.UserId.."&width=420&height=420&format=png"
-	avatar.Parent = infoSection
+	-- Player avatar
+	local avatarImg = Instance.new("ImageLabel")
+	avatarImg.Size = UDim2.new(0,80,0,80)
+	avatarImg.Position = UDim2.new(0.5,-40,0,yOffset)
+	avatarImg.BackgroundColor3 = Color3.fromRGB(60,60,60)
+	avatarImg.BorderSizePixel = 0
+	avatarImg.Image = "https://www.roblox.com/headshot-thumbnail/image?userId="..targetPlayer.UserId.."&width=420&height=420&format=png"
+	avatarImg.Parent = infoSection
 	
 	local avatarCorner = Instance.new("UICorner")
-	avatarCorner.CornerRadius = UDim.new(0,12)
-	avatarCorner.Parent = avatar
+	avatarCorner.CornerRadius = UDim.new(0,8)
+	avatarCorner.Parent = avatarImg
 	
-	yPos = yPos + 130
+	yOffset = yOffset + 90
 	
-	-- Player info
-	addInfo("Username", targetPlayer.Name, Color3.fromRGB(100,200,255))
-	addInfo("Display Name", targetPlayer.DisplayName or "N/A", Color3.fromRGB(150,150,255))
-	addInfo("User ID", targetPlayer.UserId, Color3.fromRGB(255,200,100))
-	addInfo("Account Age", targetPlayer.AccountAge .. " days", Color3.fromRGB(200,255,100))
-	addInfo("Password", genPass(), Color3.fromRGB(255,100,100))
+	-- Basic info
+	addInfoLabel("Username", targetPlayer.Name, Color3.fromRGB(100,200,255))
+	addInfoLabel("Display Name", targetPlayer.DisplayName or "N/A", Color3.fromRGB(150,150,255))
+	addInfoLabel("User ID", targetPlayer.UserId, Color3.fromRGB(255,200,100))
+	addInfoLabel("Account Age", targetPlayer.AccountAge .. " days", Color3.fromRGB(200,255,100))
+	addInfoLabel("Password", "********", Color3.fromRGB(255,100,100)) -- Placeholder
 	
+	-- Character info
 	if targetPlayer.Character then
 		local char = targetPlayer.Character
 		local humanoid = char:FindFirstChild("Humanoid")
-		local root = char:FindFirstChild("HumanoidRootPart")
+		local rootPart = char:FindFirstChild("HumanoidRootPart")
 		
-		addInfo("Has Character", "Yes", Color3.fromRGB(100,255,100))
+		addInfoLabel("Has Character", "Yes", Color3.fromRGB(100,255,100))
 		
 		if humanoid then
-			addInfo("Health", math.floor(humanoid.Health) .. "/" .. math.floor(humanoid.MaxHealth), Color3.fromRGB(255,100,100))
-			addInfo("Walk Speed", humanoid.WalkSpeed, Color3.fromRGB(100,255,200))
-			addInfo("Jump Power", humanoid.JumpPower or humanoid.JumpHeight, Color3.fromRGB(255,255,100))
+			addInfoLabel("Health", math.floor(humanoid.Health) .. "/" .. math.floor(humanoid.MaxHealth), Color3.fromRGB(255,100,100))
+			addInfoLabel("Walk Speed", humanoid.WalkSpeed, Color3.fromRGB(100,255,200))
+			addInfoLabel("Jump Power", humanoid.JumpPower or humanoid.JumpHeight, Color3.fromRGB(255,255,100))
 		end
 		
-		if root and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-			local pos = root.Position
-			addInfo("Position", string.format("%.1f, %.1f, %.1f", pos.X, pos.Y, pos.Z), Color3.fromRGB(200,200,255))
-			local distance = (root.Position - player.Character.HumanoidRootPart.Position).Magnitude
-			addInfo("Distance", string.format("%.1f studs", distance), Color3.fromRGB(255,200,200))
+		if rootPart then
+			local pos = rootPart.Position
+			addInfoLabel("Position", string.format("%.1f, %.1f, %.1f", pos.X, pos.Y, pos.Z), Color3.fromRGB(200,200,255))
+			
+			if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+				local distance = (rootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+				addInfoLabel("Distance", string.format("%.1f studs", distance), Color3.fromRGB(255,200,200))
+			end
 		end
 		
+		-- Team info
 		if targetPlayer.Team then
-			addInfo("Team", targetPlayer.Team.Name, targetPlayer.Team.TeamColor.Color)
+			addInfoLabel("Team", targetPlayer.Team.Name, targetPlayer.Team.TeamColor.Color)
 		else
-			addInfo("Team", "No Team", Color3.fromRGB(150,150,150))
+			addInfoLabel("Team", "No Team", Color3.fromRGB(150,150,150))
+		end
+		
+		-- Tools
+		local tools = {}
+		for _,tool in pairs(char:GetChildren()) do
+			if tool:IsA("Tool") then
+				table.insert(tools, tool.Name)
+			end
+		end
+		if #tools > 0 then
+			addInfoLabel("Tools", table.concat(tools, ", "), Color3.fromRGB(255,255,150))
+		else
+			addInfoLabel("Tools", "None", Color3.fromRGB(150,150,150))
 		end
 	else
-		addInfo("Has Character", "No", Color3.fromRGB(255,100,100))
+		addInfoLabel("Has Character", "No", Color3.fromRGB(255,100,100))
 	end
 	
+	-- Membership info
 	if targetPlayer.MembershipType == Enum.MembershipType.Premium then
-		addInfo("Membership", "Premium", Color3.fromRGB(255,215,0))
+		addInfoLabel("Membership", "Premium", Color3.fromRGB(255,215,0))
 	else
-		addInfo("Membership", "None", Color3.fromRGB(150,150,150))
+		addInfoLabel("Membership", "None", Color3.fromRGB(150,150,150))
 	end
 	
-	addInfo("Followers", math.random(50,1000), Color3.fromRGB(100,255,255))
-	addInfo("Following", math.random(10,500), Color3.fromRGB(255,100,255))
-	
-	infoSection.CanvasSize = UDim2.new(0,0,0,yPos + 20)
-	
-	-- Buttons
-	local btnY = 40
-	local btnH = 50
-	local btnW = 0.45
-	
-	local function createBtn(text, pos, color, callback)
-		local btn = Instance.new("TextButton")
-		btn.Size = UDim2.new(pos.w or btnW,0,0,btnH)
-		btn.Position = pos
-		btn.Text = text
-		btn.BackgroundColor3 = color
-		btn.TextColor3 = Color3.new(1,1,1)
-		btn.Font = Enum.Font.SourceSansBold
-		btn.TextSize = 14
-		btn.Parent = functionSection
-		btn.MouseButton1Click:Connect(callback)
-		
-		local corner = Instance.new("UICorner")
-		corner.CornerRadius = UDim.new(0,6)
-		corner.Parent = btn
-		
-		return btn
-	end
+	-- Set canvas size for info section
+	infoSection.CanvasSize = UDim2.new(0,0,0,yOffset + 20)
 	
 	-- Function buttons
-	createBtn("Bang (Behind)", UDim2.new(0.025,0,0,btnY), Color3.fromRGB(200,50,50), function()
-		if targetPlayer.Character and player.Character then
-			local tRoot = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
-			local pRoot = player.Character:FindFirstChild("HumanoidRootPart")
-			if tRoot and pRoot then
-				pRoot.CFrame = tRoot.CFrame * CFrame.new(0, 0, 3)
-				showNotification("Bang executed from behind!")
-			end
-		end
-	end)
+	local buttonWidth = 0.45
+	local buttonHeight = 0.15
+	local buttonSpacing = 0.05
 	
-	createBtn("Bang V2 (Front)", UDim2.new(0.525,0,0,btnY), Color3.fromRGB(200,50,100), function()
-		if targetPlayer.Character and player.Character then
-			local tRoot = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
-			local pRoot = player.Character:FindFirstChild("HumanoidRootPart")
-			if tRoot and pRoot then
-				pRoot.CFrame = tRoot.CFrame * CFrame.new(0, 0, -3)
-				showNotification("Bang V2 executed from front!")
-			end
-		end
-	end)
+	-- Bang Button
+	local bangBtn = Instance.new("TextButton")
+	bangBtn.Size = UDim2.new(buttonWidth,0,buttonHeight,0)
+	bangBtn.Position = UDim2.new(0.025,0,0.2,0)
+	bangBtn.Text = "Bang"
+	bangBtn.BackgroundColor3 = Color3.fromRGB(200,50,50)
+	bangBtn.TextColor3 = Color3.new(1,1,1)
+	bangBtn.Font = Enum.Font.SourceSansBold
+	bangBtn.TextScaled = true
+	bangBtn.Parent = functionSection
 	
-	btnY = btnY + btnH + 10
+	local bangCorner = Instance.new("UICorner")
+	bangCorner.CornerRadius = UDim.new(0,6)
+	bangCorner.Parent = bangBtn
 	
-	createBtn("Teleport Into", UDim2.new(0.025,0,0,btnY), Color3.fromRGB(50,150,200), function()
-		if targetPlayer.Character and player.Character then
-			local tRoot = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
-			local pRoot = player.Character:FindFirstChild("HumanoidRootPart")
-			if tRoot and pRoot then
-				pRoot.CFrame = tRoot.CFrame
-				showNotification("Teleported into " .. targetPlayer.Name)
-			end
-		end
-	end)
+	-- Bang V2 Button
+	local bangV2Btn = Instance.new("TextButton")
+	bangV2Btn.Size = UDim2.new(buttonWidth,0,buttonHeight,0)
+	bangV2Btn.Position = UDim2.new(0.525,0,0.2,0)
+	bangV2Btn.Text = "Bang V2"
+	bangV2Btn.BackgroundColor3 = Color3.fromRGB(200,50,100)
+	bangV2Btn.TextColor3 = Color3.new(1,1,1)
+	bangV2Btn.Font = Enum.Font.SourceSansBold
+	bangV2Btn.TextScaled = true
+	bangV2Btn.Parent = functionSection
 	
-	local spectating = false
-	local spectateBtn = createBtn("Spectate", UDim2.new(0.525,0,0,btnY), Color3.fromRGB(150,100,200), function()
-		if not spectating then
-			if targetPlayer.Character then
-				local humanoid = targetPlayer.Character:FindFirstChild("Humanoid")
-				if humanoid then
-					workspace.CurrentCamera.CameraSubject = humanoid
-					spectateBtn.Text = "Stop Spectate"
-					spectateBtn.BackgroundColor3 = Color3.fromRGB(200,100,50)
-					spectating = true
-					showNotification("Spectating " .. targetPlayer.Name)
-				end
+	local bangV2Corner = Instance.new("UICorner")
+	bangV2Corner.CornerRadius = UDim.new(0,6)
+	bangV2Corner.Parent = bangV2Btn
+	
+	-- Teleport Button
+	local teleportBtn = Instance.new("TextButton")
+	teleportBtn.Size = UDim2.new(buttonWidth,0,buttonHeight,0)
+	teleportBtn.Position = UDim2.new(0.025,0,0.4,0)
+	teleportBtn.Text = "Teleport"
+	teleportBtn.BackgroundColor3 = Color3.fromRGB(50,150,200)
+	teleportBtn.TextColor3 = Color3.new(1,1,1)
+	teleportBtn.Font = Enum.Font.SourceSansBold
+	teleportBtn.TextScaled = true
+	teleportBtn.Parent = functionSection
+	
+	local teleportCorner = Instance.new("UICorner")
+	teleportCorner.CornerRadius = UDim.new(0,6)
+	teleportCorner.Parent = teleportBtn
+	
+	-- Spectate Button
+	local spectateBtn = Instance.new("TextButton")
+	spectateBtn.Size = UDim2.new(buttonWidth,0,buttonHeight,0)
+	spectateBtn.Position = UDim2.new(0.525,0,0.4,0)
+	spectateBtn.Text = "Spectate"
+	spectateBtn.BackgroundColor3 = Color3.fromRGB(150,100,200)
+	spectateBtn.TextColor3 = Color3.new(1,1,1)
+	spectateBtn.Font = Enum.Font.SourceSansBold
+	spectateBtn.TextScaled = true
+	spectateBtn.Parent = functionSection
+	
+	local spectateCorner = Instance.new("UICorner")
+	spectateCorner.CornerRadius = UDim.new(0,6)
+	spectateCorner.Parent = spectateBtn
+	
+	-- View Profile Button
+	local profileBtn = Instance.new("TextButton")
+	profileBtn.Size = UDim2.new(0.95,0,buttonHeight,0)
+	profileBtn.Position = UDim2.new(0.025,0,0.6,0)
+	profileBtn.Text = "View Profile"
+	profileBtn.BackgroundColor3 = Color3.fromRGB(100,200,100)
+	profileBtn.TextColor3 = Color3.new(1,1,1)
+	profileBtn.Font = Enum.Font.SourceSansBold
+	profileBtn.TextScaled = true
+	profileBtn.Parent = functionSection
+	
+	local profileCorner = Instance.new("UICorner")
+	profileCorner.CornerRadius = UDim.new(0,6)
+	profileCorner.Parent = profileBtn
+	
+	-- Button Functions
+	local isSpectating = false
+	
+	bangBtn.MouseButton1Click:Connect(function()
+		if targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+			if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+				-- Teleport behind the player
+				local targetCFrame = targetPlayer.Character.HumanoidRootPart.CFrame
+				player.Character.HumanoidRootPart.CFrame = targetCFrame * CFrame.new(0, 0, 3) -- 3 studs behind
+				showNotification("Bang executed on " .. targetPlayer.Name .. " from behind!")
 			end
 		else
-			if player.Character then
-				local humanoid = player.Character:FindFirstChild("Humanoid")
-				if humanoid then
-					workspace.CurrentCamera.CameraSubject = humanoid
-					spectateBtn.Text = "Spectate"
-					spectateBtn.BackgroundColor3 = Color3.fromRGB(150,100,200)
-					spectating = false
-					showNotification("Stopped spectating")
-				end
+			showNotification("Cannot bang - target has no character")
+		end
+	end)
+	
+	bangV2Btn.MouseButton1Click:Connect(function()
+		if targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+			if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+				-- Teleport in front of the player
+				local targetCFrame = targetPlayer.Character.HumanoidRootPart.CFrame
+				player.Character.HumanoidRootPart.CFrame = targetCFrame * CFrame.new(0, 0, -3) -- 3 studs in front
+				showNotification("Bang V2 executed on " .. targetPlayer.Name .. " from front!")
+			end
+		else
+			showNotification("Cannot bang V2 - target has no character")
+		end
+	end)
+	
+	teleportBtn.MouseButton1Click:Connect(function()
+		if targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+			if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+				-- Teleport directly into the player (same position)
+				player.Character.HumanoidRootPart.CFrame = targetPlayer.Character.HumanoidRootPart.CFrame
+				showNotification("Teleported into " .. targetPlayer.Name)
+			end
+		else
+			showNotification("Cannot teleport - target has no character")
+		end
+	end)
+	
+	spectateBtn.MouseButton1Click:Connect(function()
+		if not isSpectating then
+			-- Start spectating
+			if targetPlayer.Character and targetPlayer.Character:FindFirstChild("Humanoid") then
+				workspace.CurrentCamera.CameraSubject = targetPlayer.Character.Humanoid
+				spectateBtn.Text = "Stop Spectate"
+				spectateBtn.BackgroundColor3 = Color3.fromRGB(200,100,50)
+				isSpectating = true
+				showNotification("Now spectating " .. targetPlayer.Name)
+			else
+				showNotification("Cannot spectate - target has no character")
+			end
+		else
+			-- Stop spectating
+			if player.Character and player.Character:FindFirstChild("Humanoid") then
+				workspace.CurrentCamera.CameraSubject = player.Character.Humanoid
+				spectateBtn.Text = "Spectate"
+				spectateBtn.BackgroundColor3 = Color3.fromRGB(150,100,200)
+				isSpectating = false
+				showNotification("Stopped spectating " .. targetPlayer.Name)
 			end
 		end
 	end)
 	
-	btnY = btnY + btnH + 10
-	
-	createBtn("View Profile", {x=0.025, y=0, z=0, w=0.95}, Color3.fromRGB(100,200,100), function()
-		showNotification("Profile: " .. targetPlayer.Name .. " (ID: " .. targetPlayer.UserId .. ")")
+	profileBtn.MouseButton1Click:Connect(function()
+		showNotification("Opening profile for " .. targetPlayer.Name)
+		-- This would normally open the Roblox profile, but that's not possible in-game
 	end)
 	
-	functionSection.CanvasSize = UDim2.new(0,0,0,btnY + btnH + 20)
-	
-	-- Draggable
-	local dragging = false
-	local dragStart, startPos
-	
+	-- Make draggable
+	local dragging, dragStart, startPos
 	titleBar.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 then
 			dragging = true
@@ -524,13 +643,11 @@ local function createPlayerInfoGUI(targetPlayer)
 			startPos = infoFrame.Position
 		end
 	end)
-	
 	titleBar.InputEnded:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 then
 			dragging = false
 		end
 	end)
-	
 	UserInput.InputChanged:Connect(function(input)
 		if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
 			local delta = input.Position - dragStart
@@ -542,34 +659,12 @@ local function createPlayerInfoGUI(targetPlayer)
 	end)
 end
 
--- Color button helper
-local function createColorButton(parent, pos, color, callback)
-	local frame = Instance.new("Frame")
-	frame.Size = UDim2.new(0.08,0,0.08,0)
-	frame.Position = pos
-	frame.BackgroundColor3 = color
-	frame.BorderSizePixel = 1
-	frame.BorderColor3 = Color3.new(1,1,1)
-	frame.Parent = parent
-	
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0,4)
-	corner.Parent = frame
-	
-	local btn = Instance.new("TextButton")
-	btn.Size = UDim2.new(1,0,1,0)
-	btn.BackgroundTransparency = 1
-	btn.Text = ""
-	btn.Parent = frame
-	btn.MouseButton1Click:Connect(callback)
-	
-	return frame
-end
-
--- Player Panel
+---------------------------
+-- Player Panel Inhalte
+---------------------------
 do
 	local panel = panels["Player"]
-	
+
 	local flyBtn = Instance.new("TextButton")
 	flyBtn.Size = UDim2.new(0.4,0,0.1,0)
 	flyBtn.Position = UDim2.new(0,0,0,0)
@@ -579,11 +674,11 @@ do
 	flyBtn.Font = Enum.Font.SourceSans
 	flyBtn.TextScaled = true
 	flyBtn.Parent = panel
-	
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0,4)
-	corner.Parent = flyBtn
-	
+
+	local flyCorner = Instance.new("UICorner")
+	flyCorner.CornerRadius = UDim.new(0,4)
+	flyCorner.Parent = flyBtn
+
 	flyBtn.MouseButton1Click:Connect(function()
 		if flying then
 			toggleFly(false)
@@ -595,8 +690,8 @@ do
 			flyBtn.BackgroundColor3 = Color3.fromRGB(0,150,0)
 		end
 	end)
-	
-	-- Speed controls
+
+	-- Player Speed Slider
 	local speedLabel = Instance.new("TextLabel")
 	speedLabel.Size = UDim2.new(0.4,0,0.05,0)
 	speedLabel.Position = UDim2.new(0,0,0.15,0)
@@ -606,18 +701,18 @@ do
 	speedLabel.Font = Enum.Font.SourceSans
 	speedLabel.TextScaled = true
 	speedLabel.Parent = panel
-	
+
 	local speedSlider = Instance.new("Frame")
 	speedSlider.Size = UDim2.new(0.6,0,0.05,0)
 	speedSlider.Position = UDim2.new(0.35,0,0.15,0)
 	speedSlider.BackgroundColor3 = Color3.fromRGB(50,50,50)
 	speedSlider.Parent = panel
-	
+
 	local speedFill = Instance.new("Frame")
 	speedFill.Size = UDim2.new((playerSpeed-16)/200,0,1,0)
 	speedFill.BackgroundColor3 = Color3.fromRGB(0,255,255)
 	speedFill.Parent = speedSlider
-	
+
 	local draggingSpeed = false
 	speedSlider.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -638,8 +733,8 @@ do
 			speedLabel.Text = "Speed: "..playerSpeed
 		end
 	end)
-	
-	-- Fly speed
+
+	-- Fly Speed Slider
 	local flyLabel = Instance.new("TextLabel")
 	flyLabel.Size = UDim2.new(0.4,0,0.05,0)
 	flyLabel.Position = UDim2.new(0,0,0.25,0)
@@ -649,18 +744,18 @@ do
 	flyLabel.Font = Enum.Font.SourceSans
 	flyLabel.TextScaled = true
 	flyLabel.Parent = panel
-	
+
 	local flySlider = Instance.new("Frame")
 	flySlider.Size = UDim2.new(0.6,0,0.05,0)
 	flySlider.Position = UDim2.new(0.35,0,0.25,0)
 	flySlider.BackgroundColor3 = Color3.fromRGB(50,50,50)
 	flySlider.Parent = panel
-	
+
 	local flyFill = Instance.new("Frame")
 	flyFill.Size = UDim2.new(flySpeed/200,0,1,0)
 	flyFill.BackgroundColor3 = Color3.fromRGB(255,255,0)
 	flyFill.Parent = flySlider
-	
+
 	local draggingFly = false
 	flySlider.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -672,4 +767,449 @@ do
 			draggingFly = false
 		end
 	end)
-	UserInput.InputChanged:Connect(
+	UserInput.InputChanged:Connect(function(input)
+		if draggingFly and input.UserInputType == Enum.UserInputType.MouseMovement then
+			local x = math.clamp(input.Position.X - flySlider.AbsolutePosition.X, 0, flySlider.AbsoluteSize.X)
+			local ratio = x / flySlider.AbsoluteSize.X
+			flySpeed = math.floor(ratio*200)
+			flyFill.Size = UDim2.new(ratio,0,1,0)
+			flyLabel.Text = "FlySpeed: "..flySpeed
+		end
+	end)
+end
+
+---------------------------
+-- ESP Panel Inhalte
+---------------------------
+do
+	local panel = panels["ESP"]
+
+	local hitboxBtn = Instance.new("TextButton")
+	hitboxBtn.Size = UDim2.new(0.6,0,0.1,0)
+	hitboxBtn.Position = UDim2.new(0,0,0,0)
+	hitboxBtn.Text = "Hitbox OFF"
+	hitboxBtn.BackgroundColor3 = Color3.fromRGB(58,58,58)
+	hitboxBtn.TextColor3 = Color3.new(1,1,1)
+	hitboxBtn.Font = Enum.Font.SourceSans
+	hitboxBtn.TextScaled = true
+	hitboxBtn.Parent = panel
+
+	local hitboxCorner = Instance.new("UICorner")
+	hitboxCorner.CornerRadius = UDim.new(0,4)
+	hitboxCorner.Parent = hitboxBtn
+
+	hitboxBtn.MouseButton1Click:Connect(function()
+		if espEnabled then
+			updateESP(false)
+			hitboxBtn.Text = "Hitbox OFF"
+			hitboxBtn.BackgroundColor3 = Color3.fromRGB(58,58,58)
+		else
+			updateESP(true)
+			hitboxBtn.Text = "Hitbox ON"
+			hitboxBtn.BackgroundColor3 = Color3.fromRGB(0,150,0)
+		end
+	end)
+
+	-- Hitbox Farben
+	local hitboxColorLabel = Instance.new("TextLabel")
+	hitboxColorLabel.Size = UDim2.new(0.3,0,0.05,0)
+	hitboxColorLabel.Position = UDim2.new(0,0,0.15,0)
+	hitboxColorLabel.Text = "Hitbox Color:"
+	hitboxColorLabel.BackgroundTransparency = 1
+	hitboxColorLabel.TextColor3 = Color3.new(1,1,1)
+	hitboxColorLabel.Font = Enum.Font.SourceSans
+	hitboxColorLabel.TextScaled = true
+	hitboxColorLabel.Parent = panel
+
+	-- Farbbuttons für Hitbox
+	local hitboxRedBtn = createColorButton(panel, UDim2.new(0.32,0,0.15,0), Color3.fromRGB(255,0,0), function()
+		hitboxColor = Color3.fromRGB(255,0,0)
+		updateHitboxColor()
+	end)
+
+	local hitboxGreenBtn = createColorButton(panel, UDim2.new(0.42,0,0.15,0), Color3.fromRGB(0,255,0), function()
+		hitboxColor = Color3.fromRGB(0,255,0)
+		updateHitboxColor()
+	end)
+
+	local hitboxBlueBtn = createColorButton(panel, UDim2.new(0.52,0,0.15,0), Color3.fromRGB(0,0,255), function()
+		hitboxColor = Color3.fromRGB(0,0,255)
+		updateHitboxColor()
+	end)
+
+	local hitboxYellowBtn = createColorButton(panel, UDim2.new(0.62,0,0.15,0), Color3.fromRGB(255,255,0), function()
+		hitboxColor = Color3.fromRGB(255,255,0)
+		updateHitboxColor()
+	end)
+
+	local nameBtn = Instance.new("TextButton")
+	nameBtn.Size = UDim2.new(0.6,0,0.1,0)
+	nameBtn.Position = UDim2.new(0,0,0.3,0)
+	nameBtn.Text = "Names OFF"
+	nameBtn.BackgroundColor3 = Color3.fromRGB(58,58,58)
+	nameBtn.TextColor3 = Color3.new(1,1,1)
+	nameBtn.Font = Enum.Font.SourceSans
+	nameBtn.TextScaled = true
+	nameBtn.Parent = panel
+
+	local nameCorner = Instance.new("UICorner")
+	nameCorner.CornerRadius = UDim.new(0,4)
+	nameCorner.Parent = nameBtn
+
+	nameBtn.MouseButton1Click:Connect(function()
+		if nameEnabled then
+			updateNames(false)
+			nameBtn.Text = "Names OFF"
+			nameBtn.BackgroundColor3 = Color3.fromRGB(58,58,58)
+		else
+			updateNames(true)
+			nameBtn.Text = "Names ON"
+			nameBtn.BackgroundColor3 = Color3.fromRGB(0,150,0)
+		end
+	end)
+
+	-- Name Farben
+	local nameColorLabel = Instance.new("TextLabel")
+	nameColorLabel.Size = UDim2.new(0.3,0,0.05,0)
+	nameColorLabel.Position = UDim2.new(0,0,0.45,0)
+	nameColorLabel.Text = "Name Color:"
+	nameColorLabel.BackgroundTransparency = 1
+	nameColorLabel.TextColor3 = Color3.new(1,1,1)
+	nameColorLabel.Font = Enum.Font.SourceSans
+	nameColorLabel.TextScaled = true
+	nameColorLabel.Parent = panel
+
+	-- Farbbuttons für Namen
+	local nameWhiteBtn = createColorButton(panel, UDim2.new(0.32,0,0.45,0), Color3.fromRGB(255,255,255), function()
+		nameColor = Color3.fromRGB(255,255,255)
+		updateNameColor()
+	end)
+
+	local nameRedBtn = createColorButton(panel, UDim2.new(0.42,0,0.45,0), Color3.fromRGB(255,0,0), function()
+		nameColor = Color3.fromRGB(255,0,0)
+		updateNameColor()
+	end)
+
+	local nameGreenBtn = createColorButton(panel, UDim2.new(0.52,0,0.45,0), Color3.fromRGB(0,255,0), function()
+		nameColor = Color3.fromRGB(0,255,0)
+		updateNameColor()
+	end)
+
+	local nameBlueBtn = createColorButton(panel, UDim2.new(0.62,0,0.45,0), Color3.fromRGB(0,255,255), function()
+		nameColor = Color3.fromRGB(0,255,255)
+		updateNameColor()
+	end)
+end
+
+---------------------------
+-- Voice Panel Inhalte
+---------------------------
+do
+	local panel = panels["Voice"]
+
+	local banBtn = Instance.new("TextButton")
+	banBtn.Size = UDim2.new(0.6,0,0.1,0)
+	banBtn.Position = UDim2.new(0,0,0,0)
+	banBtn.Text = "Voice Ban"
+	banBtn.BackgroundColor3 = Color3.fromRGB(58,58,58)
+	banBtn.TextColor3 = Color3.new(1,1,1)
+	banBtn.Font = Enum.Font.SourceSans
+	banBtn.TextScaled = true
+	banBtn.Parent = panel
+
+	local banCorner = Instance.new("UICorner")
+	banCorner.CornerRadius = UDim.new(0,4)
+	banCorner.Parent = banBtn
+
+	local endbanBtn = Instance.new("TextButton")
+	endbanBtn.Size = UDim2.new(0.6,0,0.1,0)
+	endbanBtn.Position = UDim2.new(0,0,0.15,0)
+	endbanBtn.Text = "Voice Endban"
+	endbanBtn.BackgroundColor3 = Color3.fromRGB(58,58,58)
+	endbanBtn.TextColor3 = Color3.new(1,1,1)
+	endbanBtn.Font = Enum.Font.SourceSans
+	endbanBtn.TextScaled = true
+	endbanBtn.Visible = false
+	endbanBtn.Parent = panel
+
+	local endbanCorner = Instance.new("UICorner")
+	endbanCorner.CornerRadius = UDim.new(0,4)
+	endbanCorner.Parent = endbanBtn
+
+	banBtn.MouseButton1Click:Connect(function()
+		banBtn.Visible = false
+		endbanBtn.Visible = true
+		-- Voice Reset
+		local voiceGui = player.PlayerGui:FindFirstChild("VoiceChat")
+		if voiceGui then
+			voiceGui.Enabled = false
+			wait(0.5)
+			voiceGui.Enabled = true
+		end
+		showNotification("Voice wurde neu gestartet!")
+	end)
+
+	endbanBtn.MouseButton1Click:Connect(function()
+		showNotification("Du wurdest entbannt (Voice Endban)")
+	end)
+end
+
+---------------------------
+-- Players Panel Inhalte (FIXED)
+---------------------------
+do
+	local panel = panels["Players"]
+	
+	-- Search box
+	local searchFrame = Instance.new("Frame")
+	searchFrame.Size = UDim2.new(1,0,0,30)
+	searchFrame.Position = UDim2.new(0,0,0,0)
+	searchFrame.BackgroundColor3 = Color3.fromRGB(45,45,45)
+	searchFrame.BorderSizePixel = 0
+	searchFrame.Parent = panel
+	
+	local searchCorner = Instance.new("UICorner")
+	searchCorner.CornerRadius = UDim.new(0,4)
+	searchCorner.Parent = searchFrame
+	
+	local searchBox = Instance.new("TextBox")
+	searchBox.Size = UDim2.new(1,-10,1,-10)
+	searchBox.Position = UDim2.new(0,5,0,5)
+	searchBox.BackgroundTransparency = 1
+	searchBox.Text = ""
+	searchBox.PlaceholderText = "Search players..."
+	searchBox.Font = Enum.Font.SourceSans
+	searchBox.TextSize = 14
+	searchBox.TextColor3 = Color3.new(1,1,1)
+	searchBox.PlaceholderColor3 = Color3.fromRGB(150,150,150)
+	searchBox.ClearTextOnFocus = false
+	searchBox.Parent = searchFrame
+	
+	local scrollFrame = Instance.new("ScrollingFrame")
+	scrollFrame.Size = UDim2.new(1,0,1,-35)
+	scrollFrame.Position = UDim2.new(0,0,0,35)
+	scrollFrame.BackgroundTransparency = 1
+	scrollFrame.ScrollBarThickness = 6
+	scrollFrame.ScrollBarImageColor3 = Color3.fromRGB(255,255,255)
+	scrollFrame.Parent = panel
+	
+	local function updatePlayerList(searchText)
+		searchText = (searchText or ""):lower()
+		
+		-- Clear existing
+		for _,child in pairs(scrollFrame:GetChildren()) do
+			if child:IsA("Frame") then
+				child:Destroy()
+			end
+		end
+		
+		local yPos = 0
+		local spacing = 5
+		
+		for i,plr in ipairs(Players:GetPlayers()) do
+			local playerName = plr.Name:lower()
+			local displayName = (plr.DisplayName or ""):lower()
+			
+			local shouldShow = searchText == "" or 
+							   playerName:find(searchText) or 
+							   displayName:find(searchText)
+			
+			if shouldShow then
+				local playerFrame = Instance.new("Frame")
+				playerFrame.Size = UDim2.new(1,-10,0,70)
+				playerFrame.Position = UDim2.new(0,5,0,yPos)
+				playerFrame.BackgroundColor3 = Color3.fromRGB(45,45,45)
+				playerFrame.BorderSizePixel = 0
+				playerFrame.Parent = scrollFrame
+				
+				local frameCorner = Instance.new("UICorner")
+				frameCorner.CornerRadius = UDim.new(0,6)
+				frameCorner.Parent = playerFrame
+				
+				-- Clickable button
+				local clickBtn = Instance.new("TextButton")
+				clickBtn.Size = UDim2.new(1,0,1,0)
+				clickBtn.BackgroundTransparency = 1
+				clickBtn.Text = ""
+				clickBtn.Parent = playerFrame
+				
+				-- Hover effects
+				clickBtn.MouseEnter:Connect(function()
+					playerFrame.BackgroundColor3 = Color3.fromRGB(65,65,65)
+				end)
+				clickBtn.MouseLeave:Connect(function()
+					playerFrame.BackgroundColor3 = Color3.fromRGB(45,45,45)
+				end)
+				
+				-- Click to open info
+				clickBtn.MouseButton1Click:Connect(function()
+					createPlayerInfoGUI(plr)
+				end)
+				
+				-- Player info labels
+				local nameLabel = Instance.new("TextLabel")
+				nameLabel.Size = UDim2.new(0.6,0,0.4,0)
+				nameLabel.Position = UDim2.new(0.05,0,0.05,0)
+				nameLabel.Text = plr.Name
+				nameLabel.BackgroundTransparency = 1
+				nameLabel.TextColor3 = Color3.new(1,1,1)
+				nameLabel.Font = Enum.Font.SourceSansBold
+				nameLabel.TextSize = 12
+				nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+				nameLabel.Parent = playerFrame
+				
+				local idLabel = Instance.new("TextLabel")
+				idLabel.Size = UDim2.new(0.6,0,0.25,0)
+				idLabel.Position = UDim2.new(0.05,0,0.4,0)
+				idLabel.Text = "ID: " .. plr.UserId
+				idLabel.BackgroundTransparency = 1
+				idLabel.TextColor3 = Color3.fromRGB(200,200,200)
+				idLabel.Font = Enum.Font.SourceSans
+				idLabel.TextSize = 10
+				idLabel.TextXAlignment = Enum.TextXAlignment.Left
+				idLabel.Parent = playerFrame
+				
+				local displayLabel = Instance.new("TextLabel")
+				displayLabel.Size = UDim2.new(0.6,0,0.25,0)
+				displayLabel.Position = UDim2.new(0.05,0,0.7,0)
+				displayLabel.Text = "Display: " .. (plr.DisplayName or "None")
+				displayLabel.BackgroundTransparency = 1
+				displayLabel.TextColor3 = Color3.fromRGB(150,150,150)
+				displayLabel.Font = Enum.Font.SourceSans
+				displayLabel.TextSize = 10
+				displayLabel.TextXAlignment = Enum.TextXAlignment.Left
+				displayLabel.Parent = playerFrame
+				
+				-- Avatar image
+				local avatar = Instance.new("ImageLabel")
+				avatar.Size = UDim2.new(0,50,0,50)
+				avatar.Position = UDim2.new(0.75,0,0.15,0)
+				avatar.BackgroundColor3 = Color3.fromRGB(60,60,60)
+				avatar.BorderSizePixel = 0
+				avatar.Image = "https://www.roblox.com/headshot-thumbnail/image?userId="..plr.UserId.."&width=100&height=100&format=png"
+				avatar.Parent = playerFrame
+				
+				local avatarCorner = Instance.new("UICorner")
+				avatarCorner.CornerRadius = UDim.new(0,6)
+				avatarCorner.Parent = avatar
+				
+				yPos = yPos + 70 + spacing
+			end
+		end
+		
+		scrollFrame.CanvasSize = UDim2.new(0,0,0,yPos)
+	end
+	
+	-- Connect search functionality
+	searchBox.Changed:Connect(function(property)
+		if property == "Text" then
+			updatePlayerList(searchBox.Text)
+		end
+	end)
+	
+	-- Initial update
+	updatePlayerList()
+	
+	-- Update when players join/leave
+	Players.PlayerAdded:Connect(function()
+		wait(1) -- Wait for character to load
+		updatePlayerList(searchBox.Text)
+	end)
+	
+	Players.PlayerRemoving:Connect(function()
+		updatePlayerList(searchBox.Text)
+	end)
+end
+
+---------------------------
+-- Drag + Resize
+---------------------------
+do
+	local dragging, dragInput, dragStart, startPos
+	dragBar.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = true
+			dragStart = input.Position
+			startPos = app.Position
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					dragging = false
+				end
+			end)
+		end
+	end)
+	dragBar.InputChanged:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement then
+			dragInput = input
+		end
+	end)
+	UserInput.InputChanged:Connect(function(input)
+		if input == dragInput and dragging then
+			local delta = input.Position - dragStart
+			app.Position = UDim2.new(
+				startPos.X.Scale, startPos.X.Offset + delta.X,
+				startPos.Y.Scale, startPos.Y.Offset + delta.Y
+			)
+		end
+	end)
+end
+
+local resize = Instance.new("Frame")
+resize.Size = UDim2.new(0.03,0,0.05,0)
+resize.Position = UDim2.new(0.97,0,0.95,0)
+resize.BackgroundColor3 = Color3.fromRGB(80,80,80)
+resize.BorderSizePixel = 0
+resize.Parent = app
+
+local resizeCorner = Instance.new("UICorner")
+resizeCorner.CornerRadius = UDim.new(0,2)
+resizeCorner.Parent = resize
+
+do
+	local resizing, startSize, mouseStart
+	resize.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			resizing = true
+			startSize = app.Size
+			mouseStart = input.Position
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					resizing = false
+				end
+			end)
+		end
+	end)
+	UserInput.InputChanged:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement and resizing then
+			local delta = input.Position - mouseStart
+			local newSize = UDim2.new(
+				startSize.X.Scale, startSize.X.Offset + delta.X,
+				startSize.Y.Scale, startSize.Y.Offset + delta.Y
+			)
+			-- Minimum size limits
+			if newSize.X.Offset >= 200 and newSize.Y.Offset >= 150 then
+				app.Size = newSize
+			end
+		end
+	end)
+end
+
+-- Toggle GUI with key
+UserInput.InputBegan:Connect(function(input)
+	if input.KeyCode == Enum.KeyCode.Insert then
+		app.Visible = not app.Visible
+	end
+end)
+
+-- Auto-update ESP when players join
+Players.PlayerAdded:Connect(function(plr)
+	plr.CharacterAdded:Connect(function()
+		wait(1)
+		if espEnabled then updateESP(true) end
+		if nameEnabled then updateNames(true) end
+	end)
+end)
+
+print("Verbessertes GUI mit funktionierender Spielersuche und Info geladen!")
+print("Drücke INSERT um das GUI zu öffnen/schließen")
+print("Im Players Panel: Suche nach Spielern und klicke sie für Details an!")
