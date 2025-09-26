@@ -1,29 +1,45 @@
+-- Services
 local Players = game:GetService("Players")
+local UserInput = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
+local TweenService = game:GetService("TweenService")
+
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- Alte GUIs löschen
+-- Alte GUI löschen
 if playerGui:FindFirstChild("ESPMainUI") then
     playerGui.ESPMainUI:Destroy()
 end
 
--- ScreenGui erstellen
+-- Root ScreenGui
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "ESPMainUI"
+screenGui.ResetOnSpawn = false
 screenGui.Parent = playerGui
 
 -- Hauptframe
 local mainFrame = Instance.new("Frame")
 mainFrame.Size = UDim2.new(0, 800, 0, 500)
 mainFrame.Position = UDim2.new(0.5, -400, 0.5, -250)
-mainFrame.BackgroundColor3 = Color3.fromRGB(200, 100, 100)
+mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+mainFrame.BorderSizePixel = 0
 mainFrame.Parent = screenGui
+local mainCorner = Instance.new("UICorner")
+mainCorner.CornerRadius = UDim.new(0, 12)
+mainCorner.Parent = mainFrame
 
--- Titelbar
+-- Titelleiste
 local titleBar = Instance.new("Frame")
 titleBar.Size = UDim2.new(1, 0, 0, 35)
-titleBar.BackgroundColor3 = Color3.fromRGB(100, 200, 100)
+titleBar.Position = UDim2.new(0,0,0,0)
+titleBar.BackgroundColor3 = Color3.fromRGB(35,35,35)
+titleBar.BorderSizePixel = 0
 titleBar.Parent = mainFrame
+local titleCorner = Instance.new("UICorner")
+titleCorner.CornerRadius = UDim.new(0, 12)
+titleCorner.Parent = titleBar
 
 local titleLabel = Instance.new("TextLabel")
 titleLabel.Size = UDim2.new(1, -70, 1, 0)
@@ -31,7 +47,7 @@ titleLabel.Position = UDim2.new(0, 10, 0, 0)
 titleLabel.BackgroundTransparency = 1
 titleLabel.Text = "ESP Menu v2.2 - Bang Bang V2"
 titleLabel.Font = Enum.Font.GothamBold
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.TextColor3 = Color3.fromRGB(255,255,255)
 titleLabel.TextSize = 16
 titleLabel.TextXAlignment = Enum.TextXAlignment.Left
 titleLabel.Parent = titleBar
@@ -40,58 +56,96 @@ titleLabel.Parent = titleBar
 local sidebar = Instance.new("Frame")
 sidebar.Size = UDim2.new(0, 150, 1, -35)
 sidebar.Position = UDim2.new(0, 0, 0, 35)
-sidebar.BackgroundColor3 = Color3.fromRGB(100, 100, 200)
+sidebar.BackgroundColor3 = Color3.fromRGB(30,30,30)
+sidebar.BorderSizePixel = 0
 sidebar.Parent = mainFrame
 
 -- Content Area
 local contentArea = Instance.new("Frame")
 contentArea.Size = UDim2.new(1, -150, 1, -35)
-contentArea.Position = UDim2.new(0, 150, 0, 35)
-contentArea.BackgroundColor3 = Color3.fromRGB(200, 200, 100)
+contentArea.Position = UDim2.new(0,150,0,35)
+contentArea.BackgroundColor3 = Color3.fromRGB(20,20,20)
+contentArea.BorderSizePixel = 0
 contentArea.Parent = mainFrame
 
--- Panels für Buttons
+-- Panels Tabelle
 local panels = {}
 
-for _, name in ipairs({"Player","ESP","Players","Settings"}) do
-    local panel = Instance.new("Frame")
-    panel.Size = UDim2.new(1, 0, 1, 0)
+-- Hilfsfunktion: Panel erstellen
+local function createPanel(name)
+    local panel = Instance.new("ScrollingFrame")
+    panel.Size = UDim2.new(1,0,1,0)
     panel.Position = UDim2.new(0,0,0,0)
-    panel.BackgroundColor3 = Color3.fromRGB(150,150,150)
+    panel.BackgroundTransparency = 1
+    panel.ScrollBarThickness = 6
     panel.Visible = false
     panel.Parent = contentArea
     panels[name] = panel
-
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1,0,0,50)
-    label.Position = UDim2.new(0,0,0,10)
-    label.BackgroundTransparency = 1
-    label.Text = name.." Panel"
-    label.Font = Enum.Font.GothamBold
-    label.TextColor3 = Color3.fromRGB(0,0,0)
-    label.TextSize = 20
-    label.Parent = panel
+    return panel
 end
 
+-- Panels erstellen
+local playerPanel = createPanel("Player")
+local espPanel = createPanel("ESP")
+local playersPanel = createPanel("Players")
+local settingsPanel = createPanel("Settings")
+
+-- Beispiel: Player Panel Inhalt
+local flyBtn = Instance.new("TextButton")
+flyBtn.Size = UDim2.new(1,-20,0,35)
+flyBtn.Position = UDim2.new(0,10,0,10)
+flyBtn.BackgroundColor3 = Color3.fromRGB(45,45,45)
+flyBtn.Text = "Fly: OFF"
+flyBtn.Font = Enum.Font.GothamBold
+flyBtn.TextColor3 = Color3.fromRGB(255,255,255)
+flyBtn.TextSize = 14
+flyBtn.Parent = playerPanel
+local flyActive = false
+flyBtn.MouseButton1Click:Connect(function()
+    flyActive = not flyActive
+    if flyActive then
+        flyBtn.Text = "Fly: ON"
+        flyBtn.BackgroundColor3 = Color3.fromRGB(40,167,69)
+    else
+        flyBtn.Text = "Fly: OFF"
+        flyBtn.BackgroundColor3 = Color3.fromRGB(45,45,45)
+    end
+end)
+
 -- Sidebar Buttons
-for i, name in ipairs({"Player","ESP","Players","Settings"}) do
+local buttonData = {
+    {name="Player", icon="👤"},
+    {name="ESP", icon="👁️"},
+    {name="Players", icon="👥"},
+    {name="Settings", icon="⚙️"}
+}
+
+for i, data in ipairs(buttonData) do
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1,-10,0,40)
     btn.Position = UDim2.new(0,5,0,10+(i-1)*45)
     btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
     btn.TextColor3 = Color3.fromRGB(255,255,255)
-    btn.Text = name
+    btn.Text = data.icon.." "..data.name
+    btn.Font = Enum.Font.Gotham
+    btn.TextSize = 14
     btn.Parent = sidebar
 
     btn.MouseButton1Click:Connect(function()
         -- Alle Panels verstecken
-        for _, p in pairs(panels) do
-            p.Visible = false
+        for _, p in pairs(panels) do p.Visible = false end
+        -- Aktuelles Panel sichtbar
+        panels[data.name].Visible = true
+
+        -- Buttons Style reset
+        for _, child in ipairs(sidebar:GetChildren()) do
+            if child:IsA("TextButton") then
+                child.BackgroundColor3 = Color3.fromRGB(40,40,40)
+            end
         end
-        -- Aktuelles Panel anzeigen
-        panels[name].Visible = true
+        btn.BackgroundColor3 = Color3.fromRGB(0,162,255)
     end)
 end
 
--- Standardpanel anzeigen
+-- Standardpanel sichtbar
 panels["Player"].Visible = true
