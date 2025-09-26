@@ -681,33 +681,23 @@ end
 
 -- Player Info GUI Function
 function createPlayerInfoGUI(targetPlayer)
-	if not targetPlayer or not targetPlayer.Parent then
-		print("Ungültiger Spieler")
-		return
-	end
-	
 	-- Remove existing player info GUI
 	local existingGui = playerGui:FindFirstChild("PlayerInfoUI")
 	if existingGui then existingGui:Destroy() end
 	
-	-- Wait a moment to ensure cleanup
-	spawn(function()
-		wait(0.1)
-		
-		-- Create new GUI
-		local infoScreenGui = Instance.new("ScreenGui")
-		infoScreenGui.Name = "PlayerInfoUI"
-		infoScreenGui.ResetOnSpawn = false
-		infoScreenGui.Parent = playerGui
-		
-		local infoFrame = Instance.new("Frame")
-		infoFrame.Size = UDim2.new(0,400,0,300)
-		infoFrame.Position = UDim2.new(0.5,-200,0.5,-150)
-		infoFrame.BackgroundColor3 = Color3.fromRGB(35,35,35)
-		infoFrame.BorderSizePixel = 0
-		infoFrame.Visible = true
-		infoFrame.Active = true
-		infoFrame.Parent = infoScreenGui
+	-- Create new GUI
+	local infoScreenGui = Instance.new("ScreenGui")
+	infoScreenGui.Name = "PlayerInfoUI"
+	infoScreenGui.ResetOnSpawn = false
+	infoScreenGui.Parent = playerGui
+	
+	local infoFrame = Instance.new("Frame")
+	infoFrame.Size = UDim2.new(0.35,0,0.4,0)
+	infoFrame.Position = UDim2.new(0.32,0,0.3,0)
+	infoFrame.BackgroundColor3 = Color3.fromRGB(35,35,35)
+	infoFrame.BorderSizePixel = 0
+	infoFrame.Visible = true
+	infoFrame.Parent = infoScreenGui
 	
 	local infoCorner = Instance.new("UICorner")
 	infoCorner.CornerRadius = UDim.new(0,8)
@@ -718,7 +708,6 @@ function createPlayerInfoGUI(targetPlayer)
 	titleBar.Size = UDim2.new(1,0,0.15,0)
 	titleBar.BackgroundColor3 = Color3.fromRGB(50,50,50)
 	titleBar.BorderSizePixel = 0
-	titleBar.Active = true
 	titleBar.Parent = infoFrame
 	
 	local titleCorner = Instance.new("UICorner")
@@ -750,11 +739,7 @@ function createPlayerInfoGUI(targetPlayer)
 	
 	closeInfoBtn.MouseButton1Click:Connect(function()
 		infoScreenGui:Destroy()
-		print("Player Info GUI geschlossen")
 	end)
-	
-	-- Debug print
-	print("Player Info GUI für " .. targetPlayer.Name .. " erstellt")
 	
 	-- Make the info GUI draggable
 	local draggingInfo = false
@@ -765,12 +750,10 @@ function createPlayerInfoGUI(targetPlayer)
 			draggingInfo = true
 			dragStartInfo = input.Position
 			startPosInfo = infoFrame.Position
-			print("Drag gestartet")
 			
 			input.Changed:Connect(function()
 				if input.UserInputState == Enum.UserInputState.End then
 					draggingInfo = false
-					print("Drag beendet")
 				end
 			end)
 		end
@@ -785,7 +768,10 @@ function createPlayerInfoGUI(targetPlayer)
 	UserInput.InputChanged:Connect(function(input)
 		if input == dragInputInfo and draggingInfo then
 			local delta = input.Position - dragStartInfo
-			infoFrame.Position = UDim2.new(0, startPosInfo.X.Offset + delta.X, 0, startPosInfo.Y.Offset + delta.Y)
+			infoFrame.Position = UDim2.new(
+				startPosInfo.X.Scale, startPosInfo.X.Offset + delta.X,
+				startPosInfo.Y.Scale, startPosInfo.Y.Offset + delta.Y
+			)
 		end
 	end)
 	
@@ -822,9 +808,9 @@ function createPlayerInfoGUI(targetPlayer)
 	UserInput.InputChanged:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseMovement and resizingInfo then
 			local delta = input.Position - mouseStartInfo
-			local newWidth = math.max(300, startSizeInfo.X.Offset + delta.X)
-			local newHeight = math.max(250, startSizeInfo.Y.Offset + delta.Y)
-			infoFrame.Size = UDim2.new(0, newWidth, 0, newHeight)
+			local newWidth = math.max(250, startSizeInfo.X.Offset + delta.X)
+			local newHeight = math.max(200, startSizeInfo.Y.Offset + delta.Y)
+			infoFrame.Size = UDim2.new(startSizeInfo.X.Scale, newWidth, startSizeInfo.Y.Scale, newHeight)
 		end
 	end)
 	
