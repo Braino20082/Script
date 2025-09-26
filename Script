@@ -565,21 +565,40 @@ local function createPlayerInfoGUI(targetPlayer)
 	profileCorner.Parent = profileBtn
 	
 	-- Button Functions
+	local isSpectating = false
+	
 	bangBtn.MouseButton1Click:Connect(function()
-		showNotification("Bang function executed on " .. targetPlayer.Name)
-		-- Add your bang function here
+		if targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+			if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+				-- Teleport behind the player
+				local targetCFrame = targetPlayer.Character.HumanoidRootPart.CFrame
+				player.Character.HumanoidRootPart.CFrame = targetCFrame * CFrame.new(0, 0, 3) -- 3 studs behind
+				showNotification("Bang executed on " .. targetPlayer.Name .. " from behind!")
+			end
+		else
+			showNotification("Cannot bang - target has no character")
+		end
 	end)
 	
 	bangV2Btn.MouseButton1Click:Connect(function()
-		showNotification("Bang V2 function executed on " .. targetPlayer.Name)
-		-- Add your bang V2 function here
+		if targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+			if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+				-- Teleport in front of the player
+				local targetCFrame = targetPlayer.Character.HumanoidRootPart.CFrame
+				player.Character.HumanoidRootPart.CFrame = targetCFrame * CFrame.new(0, 0, -3) -- 3 studs in front
+				showNotification("Bang V2 executed on " .. targetPlayer.Name .. " from front!")
+			end
+		else
+			showNotification("Cannot bang V2 - target has no character")
+		end
 	end)
 	
 	teleportBtn.MouseButton1Click:Connect(function()
 		if targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
 			if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-				player.Character.HumanoidRootPart.CFrame = targetPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0,0,3)
-				showNotification("Teleported to " .. targetPlayer.Name)
+				-- Teleport directly into the player (same position)
+				player.Character.HumanoidRootPart.CFrame = targetPlayer.Character.HumanoidRootPart.CFrame
+				showNotification("Teleported into " .. targetPlayer.Name)
 			end
 		else
 			showNotification("Cannot teleport - target has no character")
@@ -587,11 +606,26 @@ local function createPlayerInfoGUI(targetPlayer)
 	end)
 	
 	spectateBtn.MouseButton1Click:Connect(function()
-		if targetPlayer.Character and targetPlayer.Character:FindFirstChild("Humanoid") then
-			workspace.CurrentCamera.CameraSubject = targetPlayer.Character.Humanoid
-			showNotification("Now spectating " .. targetPlayer.Name)
+		if not isSpectating then
+			-- Start spectating
+			if targetPlayer.Character and targetPlayer.Character:FindFirstChild("Humanoid") then
+				workspace.CurrentCamera.CameraSubject = targetPlayer.Character.Humanoid
+				spectateBtn.Text = "Stop Spectate"
+				spectateBtn.BackgroundColor3 = Color3.fromRGB(200,100,50)
+				isSpectating = true
+				showNotification("Now spectating " .. targetPlayer.Name)
+			else
+				showNotification("Cannot spectate - target has no character")
+			end
 		else
-			showNotification("Cannot spectate - target has no character")
+			-- Stop spectating
+			if player.Character and player.Character:FindFirstChild("Humanoid") then
+				workspace.CurrentCamera.CameraSubject = player.Character.Humanoid
+				spectateBtn.Text = "Spectate"
+				spectateBtn.BackgroundColor3 = Color3.fromRGB(150,100,200)
+				isSpectating = false
+				showNotification("Stopped spectating " .. targetPlayer.Name)
+			end
 		end
 	end)
 	
