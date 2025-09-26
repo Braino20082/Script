@@ -592,18 +592,235 @@ do
 end
 
 ---------------------------
+-- Player Info GUI Function
+---------------------------
+local function createPlayerInfoGUI(targetPlayer)
+	-- Remove existing player info GUI
+	for _,v in ipairs(playerGui:GetChildren()) do
+		if v.Name == "PlayerInfoGUI" then v:Destroy() end
+	end
+	
+	local infoGui = Instance.new("ScreenGui")
+	infoGui.Name = "PlayerInfoGUI"
+	infoGui.ResetOnSpawn = false
+	infoGui.Parent = playerGui
+	
+	local infoFrame = Instance.new("Frame")
+	infoFrame.Size = UDim2.new(0.3,0,0.5,0)
+	infoFrame.Position = UDim2.new(0.35,0,0.25,0)
+	infoFrame.BackgroundColor3 = Color3.fromRGB(28,28,28)
+	infoFrame.BorderSizePixel = 0
+	infoFrame.Parent = infoGui
+	
+	local infoCorner = Instance.new("UICorner")
+	infoCorner.CornerRadius = UDim.new(0,8)
+	infoCorner.Parent = infoFrame
+	
+	-- Title bar
+	local titleBar = Instance.new("Frame")
+	titleBar.Size = UDim2.new(1,0,0.1,0)
+	titleBar.BackgroundColor3 = Color3.fromRGB(40,40,40)
+	titleBar.BorderSizePixel = 0
+	titleBar.Parent = infoFrame
+	
+	local titleLabel = Instance.new("TextLabel")
+	titleLabel.Size = UDim2.new(0.9,0,1,0)
+	titleLabel.BackgroundTransparency = 1
+	titleLabel.Text = "Player Info - " .. targetPlayer.Name
+	titleLabel.Font = Enum.Font.SourceSansBold
+	titleLabel.TextColor3 = Color3.new(1,1,1)
+	titleLabel.TextScaled = true
+	titleLabel.Parent = titleBar
+	
+	-- Close button
+	local closeInfoBtn = Instance.new("TextButton")
+	closeInfoBtn.Size = UDim2.new(0.1,0,0.8,0)
+	closeInfoBtn.Position = UDim2.new(0.9,0,0.1,0)
+	closeInfoBtn.Text = "X"
+	closeInfoBtn.Font = Enum.Font.SourceSansBold
+	closeInfoBtn.TextScaled = true
+	closeInfoBtn.BackgroundColor3 = Color3.fromRGB(150,50,50)
+	closeInfoBtn.TextColor3 = Color3.new(1,1,1)
+	closeInfoBtn.Parent = titleBar
+	closeInfoBtn.MouseButton1Click:Connect(function()
+		infoGui:Destroy()
+	end)
+	
+	-- Content area
+	local contentArea = Instance.new("ScrollingFrame")
+	contentArea.Size = UDim2.new(1,-20,0.9,-20)
+	contentArea.Position = UDim2.new(0,10,0.1,10)
+	contentArea.BackgroundTransparency = 1
+	contentArea.ScrollBarThickness = 6
+	contentArea.Parent = infoFrame
+	
+	local yOffset = 0
+	
+	-- Helper function to add info labels
+	local function addInfoLabel(title, value, color)
+		local label = Instance.new("TextLabel")
+		label.Size = UDim2.new(1,0,0,25)
+		label.Position = UDim2.new(0,0,0,yOffset)
+		label.BackgroundTransparency = 1
+		label.Text = title .. ": " .. tostring(value)
+		label.Font = Enum.Font.SourceSans
+		label.TextColor3 = color or Color3.new(1,1,1)
+		label.TextScaled = true
+		label.TextXAlignment = Enum.TextXAlignment.Left
+		label.Parent = contentArea
+		yOffset = yOffset + 30
+		return label
+	end
+	
+	-- Player avatar
+	local avatarImg = Instance.new("ImageLabel")
+	avatarImg.Size = UDim2.new(0,100,0,100)
+	avatarImg.Position = UDim2.new(0.5,-50,0,yOffset)
+	avatarImg.BackgroundColor3 = Color3.fromRGB(60,60,60)
+	avatarImg.BorderSizePixel = 0
+	avatarImg.Image = "https://www.roblox.com/headshot-thumbnail/image?userId="..targetPlayer.UserId.."&width=420&height=420&format=png"
+	avatarImg.Parent = contentArea
+	
+	local avatarCorner = Instance.new("UICorner")
+	avatarCorner.CornerRadius = UDim.new(0,8)
+	avatarCorner.Parent = avatarImg
+	
+	yOffset = yOffset + 120
+	
+	-- Basic info
+	addInfoLabel("Username", targetPlayer.Name, Color3.fromRGB(100,200,255))
+	addInfoLabel("Display Name", targetPlayer.DisplayName or "N/A", Color3.fromRGB(150,150,255))
+	addInfoLabel("User ID", targetPlayer.UserId, Color3.fromRGB(255,200,100))
+	addInfoLabel("Account Age", targetPlayer.AccountAge .. " days", Color3.fromRGB(200,255,100))
+	
+	-- Character info
+	if targetPlayer.Character then
+		local char = targetPlayer.Character
+		local humanoid = char:FindFirstChild("Humanoid")
+		local rootPart = char:FindFirstChild("HumanoidRootPart")
+		
+		addInfoLabel("Has Character", "Yes", Color3.fromRGB(100,255,100))
+		
+		if humanoid then
+			addInfoLabel("Health", math.floor(humanoid.Health) .. "/" .. math.floor(humanoid.MaxHealth), Color3.fromRGB(255,100,100))
+			addInfoLabel("Walk Speed", humanoid.WalkSpeed, Color3.fromRGB(100,255,200))
+			addInfoLabel("Jump Power", humanoid.JumpPower or humanoid.JumpHeight, Color3.fromRGB(255,255,100))
+		end
+		
+		if rootPart then
+			local pos = rootPart.Position
+			addInfoLabel("Position", string.format("%.1f, %.1f, %.1f", pos.X, pos.Y, pos.Z), Color3.fromRGB(200,200,255))
+			
+			if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+				local distance = (rootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+				addInfoLabel("Distance", string.format("%.1f studs", distance), Color3.fromRGB(255,200,200))
+			end
+		end
+		
+		-- Team info
+		if targetPlayer.Team then
+			addInfoLabel("Team", targetPlayer.Team.Name, targetPlayer.Team.TeamColor.Color)
+		else
+			addInfoLabel("Team", "No Team", Color3.fromRGB(150,150,150))
+		end
+		
+		-- Tools
+		local tools = {}
+		for _,tool in pairs(char:GetChildren()) do
+			if tool:IsA("Tool") then
+				table.insert(tools, tool.Name)
+			end
+		end
+		if #tools > 0 then
+			addInfoLabel("Tools", table.concat(tools, ", "), Color3.fromRGB(255,255,150))
+		else
+			addInfoLabel("Tools", "None", Color3.fromRGB(150,150,150))
+		end
+	else
+		addInfoLabel("Has Character", "No", Color3.fromRGB(255,100,100))
+	end
+	
+	-- Membership info
+	if targetPlayer.MembershipType == Enum.MembershipType.Premium then
+		addInfoLabel("Membership", "Premium", Color3.fromRGB(255,215,0))
+	else
+		addInfoLabel("Membership", "None", Color3.fromRGB(150,150,150))
+	end
+	
+	-- Friend status (if possible to check)
+	addInfoLabel("Friend Status", "Unknown", Color3.fromRGB(150,150,150))
+	
+	-- Set canvas size
+	contentArea.CanvasSize = UDim2.new(0,0,0,yOffset + 20)
+	
+	-- Make draggable
+	local dragging, dragStart, startPos
+	titleBar.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = true
+			dragStart = input.Position
+			startPos = infoFrame.Position
+		end
+	end)
+	titleBar.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = false
+		end
+	end)
+	UserInput.InputChanged:Connect(function(input)
+		if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+			local delta = input.Position - dragStart
+			infoFrame.Position = UDim2.new(
+				startPos.X.Scale, startPos.X.Offset + delta.X,
+				startPos.Y.Scale, startPos.Y.Offset + delta.Y
+			)
+		end
+	end)
+end
+
+---------------------------
 -- Players Panel Inhalte
 ---------------------------
 do
 	local panel = panels["Players"]
 	
+	-- Search box
+	local searchFrame = Instance.new("Frame")
+	searchFrame.Size = UDim2.new(1,0,0.1,0)
+	searchFrame.BackgroundColor3 = Color3.fromRGB(45,45,45)
+	searchFrame.BorderSizePixel = 0
+	searchFrame.Parent = panel
+	
+	local searchCorner = Instance.new("UICorner")
+	searchCorner.CornerRadius = UDim.new(0,4)
+	searchCorner.Parent = searchFrame
+	
+	local searchBox = Instance.new("TextBox")
+	searchBox.Size = UDim2.new(0.9,0,0.8,0)
+	searchBox.Position = UDim2.new(0.05,0,0.1,0)
+	searchBox.BackgroundTransparency = 1
+	searchBox.Text = ""
+	searchBox.PlaceholderText = "Search players..."
+	searchBox.Font = Enum.Font.SourceSans
+	searchBox.TextColor3 = Color3.new(1,1,1)
+	searchBox.PlaceholderColor3 = Color3.fromRGB(150,150,150)
+	searchBox.TextScaled = true
+	searchBox.ClearTextOnFocus = false
+	searchBox.Parent = searchFrame
+	
 	local scrollFrame = Instance.new("ScrollingFrame")
-	scrollFrame.Size = UDim2.new(1,0,1,0)
+	scrollFrame.Size = UDim2.new(1,0,0.9,0)
+	scrollFrame.Position = UDim2.new(0,0,0.1,0)
 	scrollFrame.BackgroundTransparency = 1
 	scrollFrame.ScrollBarThickness = 8
 	scrollFrame.Parent = panel
 	
-	local function updatePlayerList()
+	local currentSearchText = ""
+	
+	local function updatePlayerList(searchText)
+		searchText = searchText or ""
+		currentSearchText = searchText:lower()
+		
 		-- Clear existing players
 		for _,child in pairs(scrollFrame:GetChildren()) do
 			if child:IsA("Frame") then
@@ -613,55 +830,77 @@ do
 		
 		local yPos = 0
 		for _,plr in ipairs(Players:GetPlayers()) do
-			local playerFrame = Instance.new("Frame")
-			playerFrame.Size = UDim2.new(1,0,0.15,0)
-			playerFrame.Position = UDim2.new(0,0,0,yPos)
-			playerFrame.BackgroundColor3 = Color3.fromRGB(45,45,45)
-			playerFrame.BorderSizePixel = 0
-			playerFrame.Parent = scrollFrame
+			local shouldShow = currentSearchText == "" or 
+							   plr.Name:lower():find(currentSearchText) or 
+							   (plr.DisplayName and plr.DisplayName:lower():find(currentSearchText))
 			
-			local corner = Instance.new("UICorner")
-			corner.CornerRadius = UDim.new(0,4)
-			corner.Parent = playerFrame
-			
-			local nameLabel = Instance.new("TextLabel")
-			nameLabel.Size = UDim2.new(0.6,0,0.4,0)
-			nameLabel.Position = UDim2.new(0.05,0,0,0)
-			nameLabel.Text = plr.Name
-			nameLabel.BackgroundTransparency = 1
-			nameLabel.TextColor3 = Color3.new(1,1,1)
-			nameLabel.Font = Enum.Font.SourceSansBold
-			nameLabel.TextScaled = true
-			nameLabel.TextXAlignment = Enum.TextXAlignment.Left
-			nameLabel.Parent = playerFrame
-			
-			local userIdLabel = Instance.new("TextLabel")
-			userIdLabel.Size = UDim2.new(0.6,0,0.3,0)
-			userIdLabel.Position = UDim2.new(0.05,0,0.4,0)
-			userIdLabel.Text = "ID: " .. plr.UserId
-			userIdLabel.BackgroundTransparency = 1
-			userIdLabel.TextColor3 = Color3.fromRGB(200,200,200)
-			userIdLabel.Font = Enum.Font.SourceSans
-			userIdLabel.TextScaled = true
-			userIdLabel.TextXAlignment = Enum.TextXAlignment.Left
-			userIdLabel.Parent = playerFrame
-			
-			local displayNameLabel = Instance.new("TextLabel")
-			displayNameLabel.Size = UDim2.new(0.6,0,0.3,0)
-			displayNameLabel.Position = UDim2.new(0.05,0,0.7,0)
-			displayNameLabel.Text = "Display: " .. (plr.DisplayName or plr.Name)
-			displayNameLabel.BackgroundTransparency = 1
-			displayNameLabel.TextColor3 = Color3.fromRGB(150,150,150)
-			displayNameLabel.Font = Enum.Font.SourceSans
-			displayNameLabel.TextScaled = true
-			displayNameLabel.TextXAlignment = Enum.TextXAlignment.Left
-			displayNameLabel.Parent = playerFrame
-			
-			-- Avatar/Image (falls verfügbar)
-			if plr.Character and plr.Character:FindFirstChild("Humanoid") then
+			if shouldShow then
+				local playerFrame = Instance.new("Frame")
+				playerFrame.Size = UDim2.new(1,0,0,80)
+				playerFrame.Position = UDim2.new(0,0,0,yPos)
+				playerFrame.BackgroundColor3 = Color3.fromRGB(45,45,45)
+				playerFrame.BorderSizePixel = 0
+				playerFrame.Parent = scrollFrame
+				
+				local corner = Instance.new("UICorner")
+				corner.CornerRadius = UDim.new(0,4)
+				corner.Parent = playerFrame
+				
+				-- Make clickable
+				local clickBtn = Instance.new("TextButton")
+				clickBtn.Size = UDim2.new(1,0,1,0)
+				clickBtn.BackgroundTransparency = 1
+				clickBtn.Text = ""
+				clickBtn.Parent = playerFrame
+				clickBtn.MouseButton1Click:Connect(function()
+					createPlayerInfoGUI(plr)
+				end)
+				
+				-- Hover effect
+				clickBtn.MouseEnter:Connect(function()
+					playerFrame.BackgroundColor3 = Color3.fromRGB(60,60,60)
+				end)
+				clickBtn.MouseLeave:Connect(function()
+					playerFrame.BackgroundColor3 = Color3.fromRGB(45,45,45)
+				end)
+				
+				local nameLabel = Instance.new("TextLabel")
+				nameLabel.Size = UDim2.new(0.6,0,0.4,0)
+				nameLabel.Position = UDim2.new(0.05,0,0,0)
+				nameLabel.Text = plr.Name
+				nameLabel.BackgroundTransparency = 1
+				nameLabel.TextColor3 = Color3.new(1,1,1)
+				nameLabel.Font = Enum.Font.SourceSansBold
+				nameLabel.TextScaled = true
+				nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+				nameLabel.Parent = playerFrame
+				
+				local userIdLabel = Instance.new("TextLabel")
+				userIdLabel.Size = UDim2.new(0.6,0,0.3,0)
+				userIdLabel.Position = UDim2.new(0.05,0,0.4,0)
+				userIdLabel.Text = "ID: " .. plr.UserId
+				userIdLabel.BackgroundTransparency = 1
+				userIdLabel.TextColor3 = Color3.fromRGB(200,200,200)
+				userIdLabel.Font = Enum.Font.SourceSans
+				userIdLabel.TextScaled = true
+				userIdLabel.TextXAlignment = Enum.TextXAlignment.Left
+				userIdLabel.Parent = playerFrame
+				
+				local displayNameLabel = Instance.new("TextLabel")
+				displayNameLabel.Size = UDim2.new(0.6,0,0.3,0)
+				displayNameLabel.Position = UDim2.new(0.05,0,0.7,0)
+				displayNameLabel.Text = "Display: " .. (plr.DisplayName or plr.Name)
+				displayNameLabel.BackgroundTransparency = 1
+				displayNameLabel.TextColor3 = Color3.fromRGB(150,150,150)
+				displayNameLabel.Font = Enum.Font.SourceSans
+				displayNameLabel.TextScaled = true
+				displayNameLabel.TextXAlignment = Enum.TextXAlignment.Left
+				displayNameLabel.Parent = playerFrame
+				
+				-- Avatar/Image
 				local avatar = Instance.new("ImageLabel")
-				avatar.Size = UDim2.new(0.25,0,0.8,0)
-				avatar.Position = UDim2.new(0.7,0,0.1,0)
+				avatar.Size = UDim2.new(0,60,0,60)
+				avatar.Position = UDim2.new(0.75,0,0.125,0)
 				avatar.BackgroundColor3 = Color3.fromRGB(60,60,60)
 				avatar.BorderSizePixel = 0
 				avatar.Image = "https://www.roblox.com/headshot-thumbnail/image?userId="..plr.UserId.."&width=420&height=420&format=png"
@@ -670,20 +909,27 @@ do
 				local avatarCorner = Instance.new("UICorner")
 				avatarCorner.CornerRadius = UDim.new(0,8)
 				avatarCorner.Parent = avatar
+				
+				yPos = yPos + 85
 			end
-			
-			yPos = yPos + 100
 		end
 		
 		scrollFrame.CanvasSize = UDim2.new(0,0,0,yPos)
 	end
 	
+	-- Search functionality
+	searchBox.Changed:Connect(function()
+		if searchBox.Text ~= currentSearchText then
+			updatePlayerList(searchBox.Text)
+		end
+	end)
+	
 	-- Initial player list update
 	updatePlayerList()
 	
 	-- Update when players join/leave
-	Players.PlayerAdded:Connect(updatePlayerList)
-	Players.PlayerRemoving:Connect(updatePlayerList)
+	Players.PlayerAdded:Connect(function() updatePlayerList(searchBox.Text) end)
+	Players.PlayerRemoving:Connect(function() updatePlayerList(searchBox.Text) end)
 end
 
 ---------------------------
