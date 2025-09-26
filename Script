@@ -998,73 +998,81 @@ game:GetService("RunService").Heartbeat:Connect(function()
     end
 end)
 
--- Left Sidebar: "Spieler"-Button
-RegisterCommand('openPlayerMenu', function()
-    openPlayerMenu()
-end, false)
+-- Spieler-Menü unter ESP hinzufügen
+RegisterNetEvent('myScript:openSidebar')
+AddEventHandler('myScript:openSidebar', function()
+    local elements = {
+        {label = "ESP", value = "esp"},
+        {label = "Spieler", value = "players"} -- Neuer Menüpunkt
+    }
 
-function openPlayerMenu()
-    ESX.UI.Menu.CloseAll() -- Schließt vorherige Menüs
+    ESX.UI.Menu.Open('default', GetCurrentResourceName(), 'sidebar', {
+        title = 'Menü',
+        align = 'left',
+        elements = elements
+    }, function(data, menu)
+        if data.current.value == "players" then
+            openPlayerListMenu()
+        elseif data.current.value == "esp" then
+            -- dein ESP-Code hier
+        end
+    end, function(data, menu)
+        menu.close()
+    end)
+end)
 
+-- Spieler-Liste Menü
+function openPlayerListMenu()
+    ESX.UI.Menu.CloseAll()
+    local players = ESX.Game.GetPlayers()
     local elements = {}
-    local players = ESX.Game.GetPlayers() -- Holt alle Spieler IDs
 
     for _, playerId in ipairs(players) do
-        local playerPed = GetPlayerPed(playerId)
-        local playerName = GetPlayerName(playerId)
-        local playTime = math.floor(GetPlayerServerId(playerId)) -- optional: Spielzeit simuliert
         table.insert(elements, {
-            label = playerName .. " [" .. playerId .. "]",
+            label = GetPlayerName(playerId) .. " ["..playerId.."]",
             value = playerId
         })
     end
 
     ESX.UI.Menu.Open('default', GetCurrentResourceName(), 'player_list', {
-        title    = 'Spieler',
-        align    = 'left',
-        elements = elements
+        title = 'Spieler-Liste',
+        align = 'left',
+        elements = elements,
+        enableSearch = true -- Suche aktiv
     }, function(data, menu)
         local selectedId = data.current.value
-
-        -- Detailmenu für den Spieler
-        ESX.UI.Menu.Open('default', GetCurrentResourceName(), 'player_actions', {
-            title = GetPlayerName(selectedId),
-            align = 'left',
-            elements = {
-                {label = 'Passwort: probe', value = 'password'},
-                {label = 'UserID: ' .. selectedId, value = 'userid'},
-                {label = 'Username: ' .. GetPlayerName(selectedId), value = 'username'},
-                {label = 'Spieltage: 0', value = 'playdays'}, -- hier kannst du richtige Daten einsetzen
-                {label = '--- Aktionen ---', value = nil},
-                {label = 'BangBangV2', value = 'bangbang'},
-                {label = 'Sitzen', value = 'sit'},
-                {label = 'Teleportieren', value = 'teleport'},
-                {label = 'Zuschauen', value = 'spectate'}
-            }
-        }, function(data2, menu2)
-            local action = data2.current.value
-            if action == 'bangbang' then
-                TriggerServerEvent('myScript:BangBangV2', selectedId)
-            elseif action == 'sit' then
-                TriggerServerEvent('myScript:Sit', selectedId)
-            elseif action == 'teleport' then
-                TriggerServerEvent('myScript:Teleport', selectedId)
-            elseif action == 'spectate' then
-                TriggerServerEvent('myScript:Spectate', selectedId)
-            end
-        end, function(data2, menu2)
-            menu2.close()
-        end)
-
+        openPlayerInfoMenu(selectedId)
     end, function(data, menu)
         menu.close()
     end)
 end
 
--- Dynamisches Aktualisieren: Optional, falls Spieler sich verändern
-Citizen.CreateThread(function()
-    while true do
-        Citizen.Wait(5000) -- alle 5 Sekunden
-        -- Hier könntest du Menü aktualisieren oder Events triggern
-    end
-end)
+-- Spieler-Info + Aktionen Menü
+function openPlayerInfoMenu(playerId)
+    local playerName = GetPlayerName(playerId)
+    ESX.UI.Menu.Open('default', GetCurrentResourceName(), 'player_info', {
+        title = playerName,
+        align = 'left',
+        elements = {
+            {label = 'Passwort: probe', value = 'password'},
+            {label = 'UserID: '..playerId, value = 'userid'},
+            {label = 'Username: '..playerName, value = 'username'},
+            {label = 'Spieltage: 0', value = 'playdays'}, -- hier echte Daten einsetzen
+            {label = '--- Aktionen ---', value = nil},
+            {label = 'BangBangV2', value = 'bangbang'},
+            {label = 'Teleportieren', value = 'teleport'},
+            {label = 'Zuschauen', value = 'spectate'}
+        }
+    }, function(data2, menu2)
+        local action = data2.current.value
+        if action == 'bangbang' then
+            TriggerServerEvent('myScript:BangBangV2', playerId)
+        elseif action == 'teleport' then
+            TriggerServerEvent('myScript:Teleport', playerId)
+        elseif action == 'spectate' then
+            TriggerServerEvent('myScript:Spectate', playerId)
+        end
+    end, function(data2, menu2)
+        menu2.close()
+    end)
+end
