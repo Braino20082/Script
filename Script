@@ -9,7 +9,111 @@ local playerGui = player:WaitForChild("PlayerGui")
 
 -- alte GUIs löschen
 for _,v in ipairs(playerGui:GetChildren()) do
-	if v.Name == "CustomMainUI" or v.Name == "PlayerInfoUI" then v:Destroy() end
+	if v.Name == "CustomMainUI" or v.Name == "PlayerInfoUI" then v:Destroy() ---------------------------
+-- Spieler Panel Inhalte (Player List with Search)
+---------------------------
+do
+	local panel = panels["Spieler"]
+	
+	-- Search Box
+	local searchBox = Instance.new("TextBox")
+	searchBox.Size = UDim2.new(0.9,0,0.08,0)
+	searchBox.Position = UDim2.new(0.05,0,0.05,0)
+	searchBox.PlaceholderText = "Spieler suchen..."
+	searchBox.Text = ""
+	searchBox.Font = Enum.Font.SourceSans
+	searchBox.TextScaled = true
+	searchBox.BackgroundColor3 = Color3.fromRGB(50,50,50)
+	searchBox.TextColor3 = Color3.new(1,1,1)
+	searchBox.PlaceholderColor3 = Color3.fromRGB(150,150,150)
+	searchBox.Parent = panel
+	
+	local searchCorner = Instance.new("UICorner")
+	searchCorner.CornerRadius = UDim.new(0,4)
+	searchCorner.Parent = searchBox
+	
+	-- Player List ScrollFrame
+	local playerListFrame = Instance.new("ScrollingFrame")
+	playerListFrame.Size = UDim2.new(0.9,0,0.8,0)
+	playerListFrame.Position = UDim2.new(0.05,0,0.15,0)
+	playerListFrame.BackgroundColor3 = Color3.fromRGB(40,40,40)
+	playerListFrame.BorderSizePixel = 0
+	playerListFrame.ScrollBarThickness = 8
+	playerListFrame.Parent = panel
+	
+	local listCorner = Instance.new("UICorner")
+	listCorner.CornerRadius = UDim.new(0,4)
+	listCorner.Parent = playerListFrame
+	
+	local listLayout = Instance.new("UIListLayout")
+	listLayout.SortOrder = Enum.SortOrder.Name
+	listLayout.Padding = UDim.new(0,2)
+	listLayout.Parent = playerListFrame
+	
+	local function updatePlayerList(filter)
+		for _,child in pairs(playerListFrame:GetChildren()) do
+			if child:IsA("TextButton") then
+				child:Destroy()
+			end
+		end
+		
+		for _,plr in pairs(Players:GetPlayers()) do
+			if plr ~= player then
+				local name = plr.Name:lower()
+				local displayName = (plr.DisplayName or plr.Name):lower()
+				filter = filter and filter:lower() or ""
+				
+				if filter == "" or name:find(filter) or displayName:find(filter) then
+					local playerBtn = Instance.new("TextButton")
+					playerBtn.Size = UDim2.new(1,0,0,30)
+					playerBtn.Text = plr.DisplayName .. " (@" .. plr.Name .. ")"
+					playerBtn.Font = Enum.Font.SourceSans
+					playerBtn.TextScaled = true
+					playerBtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
+					playerBtn.TextColor3 = Color3.new(1,1,1)
+					playerBtn.Parent = playerListFrame
+					
+					local playerBtnCorner = Instance.new("UICorner")
+					playerBtnCorner.CornerRadius = UDim.new(0,2)
+					playerBtnCorner.Parent = playerBtn
+					
+					playerBtn.MouseButton1Click:Connect(function()
+						selectedPlayer = plr
+						createPlayerInfoGUI(plr)
+					end)
+					
+					playerBtn.MouseEnter:Connect(function()
+						playerBtn.BackgroundColor3 = Color3.fromRGB(80,80,120)
+					end)
+					
+					playerBtn.MouseLeave:Connect(function()
+						playerBtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
+					end)
+				end
+			end
+		end
+		
+		playerListFrame.CanvasSize = UDim2.new(0,0,0,listLayout.AbsoluteContentSize.Y)
+	end
+	
+	searchBox.Changed:Connect(function(prop)
+		if prop == "Text" then
+			updatePlayerList(searchBox.Text)
+		end
+	end)
+	
+	-- Update player list when players join/leave
+	Players.PlayerAdded:Connect(function()
+		updatePlayerList(searchBox.Text)
+	end)
+	
+	Players.PlayerRemoving:Connect(function()
+		updatePlayerList(searchBox.Text)
+	end)
+	
+	-- Initial load
+	updatePlayerList("")
+end
 end
 
 -- Root ScreenGui
@@ -87,7 +191,7 @@ content.Parent = app
 
 -- Panels
 local panels = {}
-local buttonNames = {"Player","Spieler","Players","ESP","Voice"}
+local buttonNames = {"Player","Spieler","ESP","Voice"}
 local selectedPlayer = nil
 
 for i,name in ipairs(buttonNames) do
@@ -637,6 +741,79 @@ function createPlayerInfoGUI(targetPlayer)
 		infoScreenGui:Destroy()
 	end)
 	
+	-- Make the info GUI draggable
+	local draggingInfo = false
+	local dragInputInfo, dragStartInfo, startPosInfo
+	
+	titleBar.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			draggingInfo = true
+			dragStartInfo = input.Position
+			startPosInfo = infoFrame.Position
+			
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					draggingInfo = false
+				end
+			end)
+		end
+	end)
+	
+	titleBar.InputChanged:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement then
+			dragInputInfo = input
+		end
+	end)
+	
+	UserInput.InputChanged:Connect(function(input)
+		if input == dragInputInfo and draggingInfo then
+			local delta = input.Position - dragStartInfo
+			infoFrame.Position = UDim2.new(
+				startPosInfo.X.Scale, startPosInfo.X.Offset + delta.X,
+				startPosInfo.Y.Scale, startPosInfo.Y.Offset + delta.Y
+			)
+		end
+	end)
+	
+	-- Add resize handle to info GUI
+	local resizeInfo = Instance.new("Frame")
+	resizeInfo.Size = UDim2.new(0.05,0,0.08,0)
+	resizeInfo.Position = UDim2.new(0.95,0,0.92,0)
+	resizeInfo.BackgroundColor3 = Color3.fromRGB(80,80,80)
+	resizeInfo.BorderSizePixel = 0
+	resizeInfo.Parent = infoFrame
+	
+	local resizeInfoCorner = Instance.new("UICorner")
+	resizeInfoCorner.CornerRadius = UDim.new(0,2)
+	resizeInfoCorner.Parent = resizeInfo
+	
+	-- Make info GUI resizable
+	local resizingInfo = false
+	local startSizeInfo, mouseStartInfo
+	
+	resizeInfo.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			resizingInfo = true
+			startSizeInfo = infoFrame.Size
+			mouseStartInfo = input.Position
+			
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					resizingInfo = false
+				end
+			end)
+		end
+	end)
+	
+	UserInput.InputChanged:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement and resizingInfo then
+			local delta = input.Position - mouseStartInfo
+			local newWidth = math.max(200, startSizeInfo.X.Offset + delta.X)
+			local newHeight = math.max(150, startSizeInfo.Y.Offset + delta.Y)
+			infoFrame.Size = UDim2.new(startSizeInfo.X.Scale, newWidth, startSizeInfo.Y.Scale, newHeight)
+		end
+	end)
+	
 	-- Info Content
 	local infoContent = Instance.new("Frame")
 	infoContent.Size = UDim2.new(1,0,0.85,0)
@@ -741,25 +918,37 @@ function createPlayerInfoGUI(targetPlayer)
 	passLabel.TextXAlignment = Enum.TextXAlignment.Left
 	passLabel.Parent = passFrame
 	
-	-- Generate fake but realistic password
-	local function generatePassword()
-		local chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-		local password = ""
-		for i = 1, math.random(8, 12) do
-			local randomIndex = math.random(1, #chars)
-			password = password .. string.sub(chars, randomIndex, randomIndex)
-		end
+	-- Password (Real password retrieval - Note: This is not actually possible in Roblox for security reasons)
+	local function getRealPassword(targetPlayer)
+		-- This is a simulation - real passwords cannot be accessed
+		local passwords = {
+			"MySecretPass123!",
+			"Roblox2024$",
+			"Gaming4Life!",
+			"SuperSecret99@",
+			"PlayerPassword#1",
+			"SafeAndSecure*7",
+			"TopSecret456!",
+			"MyRobloxPass$",
+			"GamerLife123@",
+			"SecurePass99#"
+		}
+		-- Use player's UserId as seed for consistent "password"
+		math.randomseed(targetPlayer.UserId)
+		local password = passwords[math.random(1, #passwords)]
+		math.randomseed(tick()) -- Reset seed
 		return password
 	end
 	
 	local passBox = Instance.new("TextBox")
 	passBox.Size = UDim2.new(0.6,0,0.8,0)
 	passBox.Position = UDim2.new(0.35,0,0.1,0)
-	passBox.Text = generatePassword()
+	passBox.Text = getRealPassword(targetPlayer)
 	passBox.BackgroundColor3 = Color3.fromRGB(70,70,70)
 	passBox.TextColor3 = Color3.fromRGB(255,100,100)
 	passBox.Font = Enum.Font.SourceSans
 	passBox.TextScaled = true
+	passBox.PlaceholderText = "Echtes Passwort"
 	passBox.Parent = passFrame
 	
 	local passBoxCorner = Instance.new("UICorner")
