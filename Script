@@ -1,16 +1,13 @@
--- Services
+-- StarterGui > LocalScript
 local Players = game:GetService("Players")
 local UserInput = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
 local StarterGui = game:GetService("StarterGui")
-local TweenService = game:GetService("TweenService")
-
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- Alte GUI löschen
-if playerGui:FindFirstChild("ESPMainUI") then
-    playerGui.ESPMainUI:Destroy()
+-- Alte GUIs löschen
+for _, v in ipairs(playerGui:GetChildren()) do
+	if v.Name == "ESPMainUI" then v:Destroy() end
 end
 
 -- Root ScreenGui
@@ -26,126 +23,272 @@ mainFrame.Position = UDim2.new(0.5, -400, 0.5, -250)
 mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 mainFrame.BorderSizePixel = 0
 mainFrame.Parent = screenGui
+
 local mainCorner = Instance.new("UICorner")
 mainCorner.CornerRadius = UDim.new(0, 12)
 mainCorner.Parent = mainFrame
 
--- Titelleiste
+-- Titelbar
 local titleBar = Instance.new("Frame")
 titleBar.Size = UDim2.new(1, 0, 0, 35)
-titleBar.Position = UDim2.new(0,0,0,0)
-titleBar.BackgroundColor3 = Color3.fromRGB(35,35,35)
+titleBar.Position = UDim2.new(0, 0, 0, 0)
+titleBar.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 titleBar.BorderSizePixel = 0
 titleBar.Parent = mainFrame
+
 local titleCorner = Instance.new("UICorner")
 titleCorner.CornerRadius = UDim.new(0, 12)
 titleCorner.Parent = titleBar
+
+local titleFix = Instance.new("Frame")
+titleFix.Size = UDim2.new(1, 0, 0, 12)
+titleFix.Position = UDim2.new(0, 0, 1, -12)
+titleFix.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+titleFix.BorderSizePixel = 0
+titleFix.Parent = titleBar
 
 local titleLabel = Instance.new("TextLabel")
 titleLabel.Size = UDim2.new(1, -70, 1, 0)
 titleLabel.Position = UDim2.new(0, 10, 0, 0)
 titleLabel.BackgroundTransparency = 1
-titleLabel.Text = "ESP Menu v2.2 - Bang Bang V2"
+titleLabel.Text = "👥 Spieler Liste"
 titleLabel.Font = Enum.Font.GothamBold
-titleLabel.TextColor3 = Color3.fromRGB(255,255,255)
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 titleLabel.TextSize = 16
 titleLabel.TextXAlignment = Enum.TextXAlignment.Left
 titleLabel.Parent = titleBar
+
+-- Close Button
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 25, 0, 25)
+closeBtn.Position = UDim2.new(1, -30, 0, 5)
+closeBtn.Text = "×"
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.TextSize = 18
+closeBtn.BackgroundColor3 = Color3.fromRGB(220, 53, 69)
+closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeBtn.BorderSizePixel = 0
+closeBtn.Parent = titleBar
+
+local closeCorner = Instance.new("UICorner")
+closeCorner.CornerRadius = UDim.new(0, 4)
+closeCorner.Parent = closeBtn
+
+closeBtn.MouseButton1Click:Connect(function()
+	screenGui:Destroy()
+end)
 
 -- Sidebar
 local sidebar = Instance.new("Frame")
 sidebar.Size = UDim2.new(0, 150, 1, -35)
 sidebar.Position = UDim2.new(0, 0, 0, 35)
-sidebar.BackgroundColor3 = Color3.fromRGB(30,30,30)
+sidebar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 sidebar.BorderSizePixel = 0
 sidebar.Parent = mainFrame
 
 -- Content Area
 local contentArea = Instance.new("Frame")
 contentArea.Size = UDim2.new(1, -150, 1, -35)
-contentArea.Position = UDim2.new(0,150,0,35)
-contentArea.BackgroundColor3 = Color3.fromRGB(20,20,20)
+contentArea.Position = UDim2.new(0, 150, 0, 35)
+contentArea.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 contentArea.BorderSizePixel = 0
 contentArea.Parent = mainFrame
 
--- Panels Tabelle
-local panels = {}
+-- Player Info GUI
+local playerInfoGui = nil
+local function createPlayerInfoGUI(targetPlayer)
+	if playerInfoGui then playerInfoGui:Destroy() end
 
--- Hilfsfunktion: Panel erstellen
-local function createPanel(name)
-    local panel = Instance.new("ScrollingFrame")
-    panel.Size = UDim2.new(1,0,1,0)
-    panel.Position = UDim2.new(0,0,0,0)
-    panel.BackgroundTransparency = 1
-    panel.ScrollBarThickness = 6
-    panel.Visible = false
-    panel.Parent = contentArea
-    panels[name] = panel
-    return panel
+	playerInfoGui = Instance.new("Frame")
+	playerInfoGui.Size = UDim2.new(0, 350, 0, 450)
+	playerInfoGui.Position = UDim2.new(0.5, -175, 0.5, -225)
+	playerInfoGui.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+	playerInfoGui.BorderSizePixel = 0
+	playerInfoGui.ZIndex = 10
+	playerInfoGui.Parent = screenGui
+
+	local infoCorner = Instance.new("UICorner")
+	infoCorner.CornerRadius = UDim.new(0, 10)
+	infoCorner.Parent = playerInfoGui
+
+	-- Titel
+	local infoTitle = Instance.new("TextLabel")
+	infoTitle.Size = UDim2.new(1, -30, 0, 40)
+	infoTitle.Position = UDim2.new(0, 15, 0, 10)
+	infoTitle.BackgroundTransparency = 1
+	infoTitle.Text = "👤 " .. targetPlayer.Name
+	infoTitle.Font = Enum.Font.GothamBold
+	infoTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+	infoTitle.TextSize = 18
+	infoTitle.TextXAlignment = Enum.TextXAlignment.Left
+	infoTitle.Parent = playerInfoGui
+
+	-- Close Button
+	local infoCloseBtn = Instance.new("TextButton")
+	infoCloseBtn.Size = UDim2.new(0, 25, 0, 25)
+	infoCloseBtn.Position = UDim2.new(1, -35, 0, 10)
+	infoCloseBtn.Text = "×"
+	infoCloseBtn.Font = Enum.Font.GothamBold
+	infoCloseBtn.TextSize = 16
+	infoCloseBtn.BackgroundColor3 = Color3.fromRGB(220, 53, 69)
+	infoCloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	infoCloseBtn.BorderSizePixel = 0
+	infoCloseBtn.Parent = playerInfoGui
+
+	local infoCloseCorner = Instance.new("UICorner")
+	infoCloseCorner.CornerRadius = UDim.new(0, 4)
+	infoCloseCorner.Parent = infoCloseBtn
+
+	infoCloseBtn.MouseButton1Click:Connect(function()
+		playerInfoGui:Destroy()
+		playerInfoGui = nil
+	end)
+
+	-- ScrollingFrame für Player Info
+	local infoContainer = Instance.new("ScrollingFrame")
+	infoContainer.Size = UDim2.new(1, -30, 1, -60)
+	infoContainer.Position = UDim2.new(0, 15, 0, 60)
+	infoContainer.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+	infoContainer.BorderSizePixel = 0
+	infoContainer.ScrollBarThickness = 6
+	infoContainer.CanvasSize = UDim2.new(0, 0, 0, 300)
+	infoContainer.Parent = playerInfoGui
+
+	local containerCorner = Instance.new("UICorner")
+	containerCorner.CornerRadius = UDim.new(0, 8)
+	containerCorner.Parent = infoContainer
+
+	-- Buttons: Teleport & Spectate
+	local teleportBtn = Instance.new("TextButton")
+	teleportBtn.Size = UDim2.new(1, -20, 0, 35)
+	teleportBtn.Position = UDim2.new(0, 10, 0, 10)
+	teleportBtn.BackgroundColor3 = Color3.fromRGB(40, 167, 69)
+	teleportBtn.BorderSizePixel = 0
+	teleportBtn.Text = "📍 Teleport"
+	teleportBtn.Font = Enum.Font.GothamBold
+	teleportBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	teleportBtn.TextSize = 14
+	teleportBtn.Parent = infoContainer
+
+	local teleportCorner = Instance.new("UICorner")
+	teleportCorner.CornerRadius = UDim.new(0, 6)
+	teleportCorner.Parent = teleportBtn
+
+	teleportBtn.MouseButton1Click:Connect(function()
+		if targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") and
+		   player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+			player.Character.HumanoidRootPart.CFrame =
+				targetPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, -5)
+		end
+	end)
+
+	local spectateBtn = Instance.new("TextButton")
+	spectateBtn.Size = UDim2.new(1, -20, 0, 35)
+	spectateBtn.Position = UDim2.new(0, 10, 0, 55)
+	spectateBtn.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+	spectateBtn.BorderSizePixel = 0
+	spectateBtn.Text = "👁️ Spectate"
+	spectateBtn.Font = Enum.Font.GothamBold
+	spectateBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	spectateBtn.TextSize = 14
+	spectateBtn.Parent = infoContainer
+
+	local spectateCorner = Instance.new("UICorner")
+	spectateCorner.CornerRadius = UDim.new(0, 6)
+	spectateCorner.Parent = spectateBtn
+
+	spectateBtn.MouseButton1Click:Connect(function()
+		if targetPlayer.Character and targetPlayer.Character:FindFirstChild("Humanoid") then
+			workspace.CurrentCamera.CameraSubject = targetPlayer.Character.Humanoid
+		end
+	end)
 end
 
--- Panels erstellen
-local playerPanel = createPanel("Player")
-local espPanel = createPanel("ESP")
-local playersPanel = createPanel("Players")
-local settingsPanel = createPanel("Settings")
+-- Players Panel
+local playerListUI = nil
+local function createPlayersPanel()
+	local panel = Instance.new("Frame")
+	panel.Size = UDim2.new(1, 0, 1, 0)
+	panel.Position = UDim2.new(0, 0, 0, 0)
+	panel.BackgroundTransparency = 1
+	panel.Visible = true
+	panel.Parent = contentArea
 
--- Beispiel: Player Panel Inhalt
-local flyBtn = Instance.new("TextButton")
-flyBtn.Size = UDim2.new(1,-20,0,35)
-flyBtn.Position = UDim2.new(0,10,0,10)
-flyBtn.BackgroundColor3 = Color3.fromRGB(45,45,45)
-flyBtn.Text = "Fly: OFF"
-flyBtn.Font = Enum.Font.GothamBold
-flyBtn.TextColor3 = Color3.fromRGB(255,255,255)
-flyBtn.TextSize = 14
-flyBtn.Parent = playerPanel
-local flyActive = false
-flyBtn.MouseButton1Click:Connect(function()
-    flyActive = not flyActive
-    if flyActive then
-        flyBtn.Text = "Fly: ON"
-        flyBtn.BackgroundColor3 = Color3.fromRGB(40,167,69)
-    else
-        flyBtn.Text = "Fly: OFF"
-        flyBtn.BackgroundColor3 = Color3.fromRGB(45,45,45)
-    end
-end)
+	-- Header
+	local headerFrame = Instance.new("Frame")
+	headerFrame.Size = UDim2.new(1, -20, 0, 40)
+	headerFrame.Position = UDim2.new(0, 10, 0, 10)
+	headerFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+	headerFrame.BorderSizePixel = 0
+	headerFrame.Parent = panel
 
--- Sidebar Buttons
-local buttonData = {
-    {name="Player", icon="👤"},
-    {name="ESP", icon="👁️"},
-    {name="Players", icon="👥"},
-    {name="Settings", icon="⚙️"}
-}
+	local headerCorner = Instance.new("UICorner")
+	headerCorner.CornerRadius = UDim.new(0, 8)
+	headerCorner.Parent = headerFrame
 
-for i, data in ipairs(buttonData) do
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1,-10,0,40)
-    btn.Position = UDim2.new(0,5,0,10+(i-1)*45)
-    btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
-    btn.TextColor3 = Color3.fromRGB(255,255,255)
-    btn.Text = data.icon.." "..data.name
-    btn.Font = Enum.Font.Gotham
-    btn.TextSize = 14
-    btn.Parent = sidebar
+	local headerLabel = Instance.new("TextLabel")
+	headerLabel.Size = UDim2.new(1, -20, 1, 0)
+	headerLabel.Position = UDim2.new(0, 10, 0, 0)
+	headerLabel.BackgroundTransparency = 1
+	headerLabel.Text = "👥 Spieler im Server"
+	headerLabel.Font = Enum.Font.GothamBold
+	headerLabel.TextColor3 = Color3.fromRGB(0, 162, 255)
+	headerLabel.TextSize = 16
+	headerLabel.TextXAlignment = Enum.TextXAlignment.Left
+	headerLabel.Parent = headerFrame
 
-    btn.MouseButton1Click:Connect(function()
-        -- Alle Panels verstecken
-        for _, p in pairs(panels) do p.Visible = false end
-        -- Aktuelles Panel sichtbar
-        panels[data.name].Visible = true
+	-- Player List ScrollingFrame
+	playerListUI = Instance.new("ScrollingFrame")
+	playerListUI.Size = UDim2.new(1, -20, 1, -70)
+	playerListUI.Position = UDim2.new(0, 10, 0, 60)
+	playerListUI.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+	playerListUI.BorderSizePixel = 0
+	playerListUI.ScrollBarThickness = 6
+	playerListUI.CanvasSize = UDim2.new(0, 0, 0, 0)
+	playerListUI.Parent = panel
 
-        -- Buttons Style reset
-        for _, child in ipairs(sidebar:GetChildren()) do
-            if child:IsA("TextButton") then
-                child.BackgroundColor3 = Color3.fromRGB(40,40,40)
-            end
-        end
-        btn.BackgroundColor3 = Color3.fromRGB(0,162,255)
-    end)
+	local listCorner = Instance.new("UICorner")
+	listCorner.CornerRadius = UDim.new(0, 8)
+	listCorner.Parent = playerListUI
+
+	-- Update Player List
+	local function updatePlayerList()
+		if not playerListUI then return end
+		for _, child in ipairs(playerListUI:GetChildren()) do
+			if child:IsA("TextButton") then child:Destroy() end
+		end
+
+		local count = 0
+		for _, plr in ipairs(Players:GetPlayers()) do
+			if plr ~= player then
+				count += 1
+				local btn = Instance.new("TextButton")
+				btn.Size = UDim2.new(1, -10, 0, 40)
+				btn.Position = UDim2.new(0, 5, 0, 5 + (count-1)*45)
+				btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+				btn.BorderSizePixel = 0
+				btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+				btn.TextSize = 12
+				btn.TextXAlignment = Enum.TextXAlignment.Left
+				btn.Text = plr.Name
+				btn.Parent = playerListUI
+
+				local corner = Instance.new("UICorner")
+				corner.CornerRadius = UDim.new(0, 6)
+				corner.Parent = btn
+
+				btn.MouseButton1Click:Connect(function()
+					createPlayerInfoGUI(plr)
+				end)
+			end
+		end
+		playerListUI.CanvasSize = UDim2.new(0, 0, 0, count*45 + 10)
+	end
+
+	updatePlayerList()
+	Players.PlayerAdded:Connect(updatePlayerList)
+	Players.PlayerRemoving:Connect(updatePlayerList)
+	return panel
 end
 
--- Standardpanel sichtbar
-panels["Player"].Visible = true
+createPlayersPanel()
