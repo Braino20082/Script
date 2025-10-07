@@ -174,20 +174,33 @@ local function makeCompletelyInvisible()
         humanoid.DisplayName = ""
     end
     
-    -- Charakter unsichtbar machen
-    for _, part in pairs(character:GetDescendants()) do
-        if part:IsA("BasePart") then
+    -- Alle Körperteile unsichtbar machen
+    for _, part in pairs(character:GetChildren()) do
+        if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
             originalTransparency[part] = part.Transparency
             part.Transparency = 1
-        elseif part:IsA("Decal") then
-            originalTransparency[part] = part.Transparency
-            part.Transparency = 1
+            
+            -- Face Decal verstecken
+            local face = part:FindFirstChildOfClass("Decal")
+            if face then
+                originalTransparency[face] = face.Transparency
+                face.Transparency = 1
+            end
         elseif part:IsA("Accessory") then
+            -- Accessoires (Hüte, Haare, etc.) verstecken
             local handle = part:FindFirstChild("Handle")
-            if handle then
+            if handle and handle:IsA("BasePart") then
                 originalTransparency[handle] = handle.Transparency
                 handle.Transparency = 1
             end
+        end
+    end
+    
+    -- Kleidung verstecken
+    for _, clothing in pairs(character:GetChildren()) do
+        if clothing:IsA("Shirt") or clothing:IsA("Pants") or clothing:IsA("ShirtGraphic") then
+            originalTransparency[clothing] = clothing.Enabled or true
+            clothing:Destroy()
         end
     end
 end
@@ -198,16 +211,19 @@ local function makeCompletelyVisible()
     
     -- Name wieder anzeigen
     local humanoid = character:FindFirstChildOfClass("Humanoid")
-    if humanoid then
+    if humanoid and originalName ~= "" then
         humanoid.DisplayName = originalName
     end
     
-    -- Charakter sichtbar machen
-    for _, part in pairs(character:GetDescendants()) do
-        if (part:IsA("BasePart") or part:IsA("Decal")) and originalTransparency[part] then
-            part.Transparency = originalTransparency[part]
+    -- Alle Körperteile wieder sichtbar machen
+    for part, transparency in pairs(originalTransparency) do
+        if part and part.Parent then
+            part.Transparency = transparency
         end
     end
+    
+    -- Transparency-Cache leeren
+    originalTransparency = {}
 end
 
 -- Toggle Unsichtbar Event
@@ -218,10 +234,12 @@ ToggleUnsichtBtn.MouseButton1Click:Connect(function()
         makeCompletelyInvisible()
         UnsichtStatus.Text = "ON"
         UnsichtStatus.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+        print("👻 Du bist jetzt unsichtbar!")
     else
         makeCompletelyVisible()
         UnsichtStatus.Text = "OFF"
         UnsichtStatus.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+        print("✅ Du bist wieder sichtbar!")
     end
 end)
 
