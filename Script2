@@ -1,61 +1,63 @@
--- Roblox Name Unsichtbar GUI - Vereinfacht
+-- Roblox Unsichtbarkeits GUI
 
 -- Services
 local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 
 -- GUI Erstellen
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "NameUnsichtbarGUI"
+ScreenGui.Name = "UnsichtbarGUI"
 ScreenGui.ResetOnSpawn = false
+ScreenGui.IgnoreGuiInset = true
 ScreenGui.Parent = player:WaitForChild("PlayerGui")
 
--- Main Frame
+-- Main Frame (Skalierbar)
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Parent = ScreenGui
-MainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 MainFrame.BorderSizePixel = 2
 MainFrame.BorderColor3 = Color3.fromRGB(60, 60, 60)
-MainFrame.Position = UDim2.new(0.4, 0, 0.4, 0)
-MainFrame.Size = UDim2.new(0, 300, 0, 150)
+MainFrame.Position = UDim2.new(0.35, 0, 0.35, 0)
+MainFrame.Size = UDim2.new(0, 320, 0, 200)
 MainFrame.Active = true
 MainFrame.Draggable = true
 
--- Schatten Effekt
-local Shadow = Instance.new("Frame")
-Shadow.Name = "Shadow"
-Shadow.Parent = MainFrame
-Shadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-Shadow.BackgroundTransparency = 0.5
-Shadow.BorderSizePixel = 0
-Shadow.Position = UDim2.new(0, 5, 0, 5)
-Shadow.Size = UDim2.new(1, 0, 1, 0)
-Shadow.ZIndex = 0
+-- UICorner für abgerundete Ecken
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 8)
+MainCorner.Parent = MainFrame
 
 -- Title Bar
 local TitleBar = Instance.new("Frame")
 TitleBar.Name = "TitleBar"
 TitleBar.Parent = MainFrame
-TitleBar.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+TitleBar.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 TitleBar.BorderSizePixel = 0
-TitleBar.Size = UDim2.new(1, 0, 0, 35)
-TitleBar.ZIndex = 2
+TitleBar.Size = UDim2.new(1, 0, 0, 40)
+
+local TitleCorner = Instance.new("UICorner")
+TitleCorner.CornerRadius = UDim.new(0, 8)
+TitleCorner.Parent = TitleBar
 
 -- Title
 local Title = Instance.new("TextLabel")
 Title.Name = "Title"
 Title.Parent = TitleBar
 Title.BackgroundTransparency = 1
-Title.Position = UDim2.new(0, 10, 0, 0)
+Title.Position = UDim2.new(0, 15, 0, 0)
 Title.Size = UDim2.new(0.7, 0, 1, 0)
 Title.Font = Enum.Font.GothamBold
-Title.Text = "Name Unsichtbar"
+Title.Text = "Unsichtbarkeit"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextSize = 16
+Title.TextSize = 18
+Title.TextScaled = true
 Title.TextXAlignment = Enum.TextXAlignment.Left
-Title.ZIndex = 3
+
+local TitleConstraint = Instance.new("UITextSizeConstraint")
+TitleConstraint.MaxTextSize = 18
+TitleConstraint.Parent = Title
 
 -- Close Button
 local CloseButton = Instance.new("TextButton")
@@ -63,58 +65,142 @@ CloseButton.Name = "CloseButton"
 CloseButton.Parent = TitleBar
 CloseButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
 CloseButton.BorderSizePixel = 0
-CloseButton.Position = UDim2.new(1, -30, 0, 5)
+CloseButton.Position = UDim2.new(1, -35, 0.5, -12)
 CloseButton.Size = UDim2.new(0, 25, 0, 25)
 CloseButton.Font = Enum.Font.GothamBold
 CloseButton.Text = "X"
 CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseButton.TextSize = 14
-CloseButton.ZIndex = 3
+CloseButton.TextSize = 16
+CloseButton.TextScaled = true
 
--- Status Label
-local StatusLabel = Instance.new("TextLabel")
-StatusLabel.Name = "StatusLabel"
-StatusLabel.Parent = MainFrame
-StatusLabel.BackgroundTransparency = 1
-StatusLabel.Position = UDim2.new(0, 20, 0, 60)
-StatusLabel.Size = UDim2.new(0, 260, 0, 30)
-StatusLabel.Font = Enum.Font.Gotham
-StatusLabel.Text = "Name Unsichtbar: OFF"
-StatusLabel.TextColor3 = Color3.fromRGB(200, 50, 50)
-StatusLabel.TextSize = 14
-StatusLabel.ZIndex = 2
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 4)
+CloseCorner.Parent = CloseButton
 
--- Toggle Button
-local ToggleButton = Instance.new("TextButton")
-ToggleButton.Name = "ToggleButton"
-ToggleButton.Parent = MainFrame
-ToggleButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-ToggleButton.BorderSizePixel = 0
-ToggleButton.Position = UDim2.new(0, 20, 0, 100)
-ToggleButton.Size = UDim2.new(0, 260, 0, 35)
-ToggleButton.Font = Enum.Font.GothamBold
-ToggleButton.Text = "Toggle Name"
-ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-ToggleButton.TextSize = 14
-ToggleButton.ZIndex = 2
+-- Content Frame
+local ContentFrame = Instance.new("Frame")
+ContentFrame.Name = "ContentFrame"
+ContentFrame.Parent = MainFrame
+ContentFrame.BackgroundTransparency = 1
+ContentFrame.Position = UDim2.new(0, 0, 0, 45)
+ContentFrame.Size = UDim2.new(1, 0, 1, -45)
 
--- Resize Handle
-local ResizeHandle = Instance.new("TextLabel")
-ResizeHandle.Name = "ResizeHandle"
-ResizeHandle.Parent = MainFrame
-ResizeHandle.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-ResizeHandle.BorderSizePixel = 0
-ResizeHandle.Position = UDim2.new(1, -15, 1, -15)
-ResizeHandle.Size = UDim2.new(0, 15, 0, 15)
-ResizeHandle.Text = ""
-ResizeHandle.ZIndex = 2
+-- Name Label
+local NameLabel = Instance.new("TextLabel")
+NameLabel.Name = "NameLabel"
+NameLabel.Parent = ContentFrame
+NameLabel.BackgroundTransparency = 1
+NameLabel.Position = UDim2.new(0, 15, 0, 10)
+NameLabel.Size = UDim2.new(0.5, -20, 0, 30)
+NameLabel.Font = Enum.Font.Gotham
+NameLabel.Text = "Name:"
+NameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+NameLabel.TextSize = 16
+NameLabel.TextScaled = true
+NameLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+local NameConstraint = Instance.new("UITextSizeConstraint")
+NameConstraint.MaxTextSize = 16
+NameConstraint.Parent = NameLabel
+
+-- Name Status
+local NameStatus = Instance.new("TextLabel")
+NameStatus.Name = "NameStatus"
+NameStatus.Parent = ContentFrame
+NameStatus.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+NameStatus.BorderSizePixel = 0
+NameStatus.Position = UDim2.new(0.5, 5, 0, 10)
+NameStatus.Size = UDim2.new(0.5, -20, 0, 30)
+NameStatus.Font = Enum.Font.GothamBold
+NameStatus.Text = "OFF"
+NameStatus.TextColor3 = Color3.fromRGB(255, 255, 255)
+NameStatus.TextSize = 16
+NameStatus.TextScaled = true
+
+local NameStatusCorner = Instance.new("UICorner")
+NameStatusCorner.CornerRadius = UDim.new(0, 6)
+NameStatusCorner.Parent = NameStatus
+
+-- Unsichtbar Label
+local UnsichtLabel = Instance.new("TextLabel")
+UnsichtLabel.Name = "UnsichtLabel"
+UnsichtLabel.Parent = ContentFrame
+UnsichtLabel.BackgroundTransparency = 1
+UnsichtLabel.Position = UDim2.new(0, 15, 0, 50)
+UnsichtLabel.Size = UDim2.new(0.5, -20, 0, 30)
+UnsichtLabel.Font = Enum.Font.Gotham
+UnsichtLabel.Text = "Unsichtbar:"
+UnsichtLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+UnsichtLabel.TextSize = 16
+UnsichtLabel.TextScaled = true
+UnsichtLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+local UnsichtConstraint = Instance.new("UITextSizeConstraint")
+UnsichtConstraint.MaxTextSize = 16
+UnsichtConstraint.Parent = UnsichtLabel
+
+-- Unsichtbar Status
+local UnsichtStatus = Instance.new("TextLabel")
+UnsichtStatus.Name = "UnsichtStatus"
+UnsichtStatus.Parent = ContentFrame
+UnsichtStatus.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+UnsichtStatus.BorderSizePixel = 0
+UnsichtStatus.Position = UDim2.new(0.5, 5, 0, 50)
+UnsichtStatus.Size = UDim2.new(0.5, -20, 0, 30)
+UnsichtStatus.Font = Enum.Font.GothamBold
+UnsichtStatus.Text = "OFF"
+UnsichtStatus.TextColor3 = Color3.fromRGB(255, 255, 255)
+UnsichtStatus.TextSize = 16
+UnsichtStatus.TextScaled = true
+
+local UnsichtStatusCorner = Instance.new("UICorner")
+UnsichtStatusCorner.CornerRadius = UDim.new(0, 6)
+UnsichtStatusCorner.Parent = UnsichtStatus
+
+-- Toggle Name Button
+local ToggleNameBtn = Instance.new("TextButton")
+ToggleNameBtn.Name = "ToggleNameBtn"
+ToggleNameBtn.Parent = ContentFrame
+ToggleNameBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+ToggleNameBtn.BorderSizePixel = 0
+ToggleNameBtn.Position = UDim2.new(0, 15, 0, 95)
+ToggleNameBtn.Size = UDim2.new(1, -30, 0, 25)
+ToggleNameBtn.Font = Enum.Font.GothamBold
+ToggleNameBtn.Text = "Toggle Name"
+ToggleNameBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleNameBtn.TextSize = 14
+ToggleNameBtn.TextScaled = true
+
+local ToggleNameCorner = Instance.new("UICorner")
+ToggleNameCorner.CornerRadius = UDim.new(0, 6)
+ToggleNameCorner.Parent = ToggleNameBtn
+
+-- Toggle Unsichtbar Button
+local ToggleUnsichtBtn = Instance.new("TextButton")
+ToggleUnsichtBtn.Name = "ToggleUnsichtBtn"
+ToggleUnsichtBtn.Parent = ContentFrame
+ToggleUnsichtBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+ToggleUnsichtBtn.BorderSizePixel = 0
+ToggleUnsichtBtn.Position = UDim2.new(0, 15, 0, 125)
+ToggleUnsichtBtn.Size = UDim2.new(1, -30, 0, 25)
+ToggleUnsichtBtn.Font = Enum.Font.GothamBold
+ToggleUnsichtBtn.Text = "Toggle Unsichtbar"
+ToggleUnsichtBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleUnsichtBtn.TextSize = 14
+ToggleUnsichtBtn.TextScaled = true
+
+local ToggleUnsichtCorner = Instance.new("UICorner")
+ToggleUnsichtCorner.CornerRadius = UDim.new(0, 6)
+ToggleUnsichtCorner.Parent = ToggleUnsichtBtn
 
 -- Variablen
 local nameHidden = false
+local charInvisible = false
 local originalName = ""
+local originalTransparency = {}
 
 -- Funktionen
-local function hidePlayerName()
+local function hideName()
     local character = player.Character
     if not character then return end
     
@@ -125,7 +211,7 @@ local function hidePlayerName()
     end
 end
 
-local function showPlayerName()
+local function showName()
     local character = player.Character
     if not character then return end
     
@@ -135,26 +221,71 @@ local function showPlayerName()
     end
 end
 
--- Toggle Button Event
-ToggleButton.MouseButton1Click:Connect(function()
+local function makeInvisible()
+    local character = player.Character
+    if not character then return end
+    
+    for _, part in pairs(character:GetDescendants()) do
+        if part:IsA("BasePart") or part:IsA("Decal") then
+            originalTransparency[part] = part.Transparency
+            part.Transparency = 1
+        elseif part:IsA("Accessory") then
+            local handle = part:FindFirstChild("Handle")
+            if handle then
+                originalTransparency[handle] = handle.Transparency
+                handle.Transparency = 1
+            end
+        end
+    end
+end
+
+local function makeVisible()
+    local character = player.Character
+    if not character then return end
+    
+    for _, part in pairs(character:GetDescendants()) do
+        if part:IsA("BasePart") or part:IsA("Decal") then
+            if originalTransparency[part] then
+                part.Transparency = originalTransparency[part]
+            end
+        end
+    end
+end
+
+-- Toggle Name Event
+ToggleNameBtn.MouseButton1Click:Connect(function()
     nameHidden = not nameHidden
     
     if nameHidden then
-        hidePlayerName()
-        StatusLabel.Text = "Name Unsichtbar: ON"
-        StatusLabel.TextColor3 = Color3.fromRGB(50, 200, 50)
+        hideName()
+        NameStatus.Text = "ON"
+        NameStatus.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
     else
-        showPlayerName()
-        StatusLabel.Text = "Name Unsichtbar: OFF"
-        StatusLabel.TextColor3 = Color3.fromRGB(200, 50, 50)
+        showName()
+        NameStatus.Text = "OFF"
+        NameStatus.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    end
+end)
+
+-- Toggle Unsichtbar Event
+ToggleUnsichtBtn.MouseButton1Click:Connect(function()
+    charInvisible = not charInvisible
+    
+    if charInvisible then
+        makeInvisible()
+        UnsichtStatus.Text = "ON"
+        UnsichtStatus.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+    else
+        makeVisible()
+        UnsichtStatus.Text = "OFF"
+        UnsichtStatus.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
     end
 end)
 
 -- Close Button Event
 CloseButton.MouseButton1Click:Connect(function()
-    if nameHidden then
-        showPlayerName()
-    end
+    if nameHidden then showName() end
+    if charInvisible then makeVisible() end
     ScreenGui:Destroy()
 end)
 
@@ -167,50 +298,30 @@ CloseButton.MouseLeave:Connect(function()
     CloseButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
 end)
 
-ToggleButton.MouseEnter:Connect(function()
-    ToggleButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+ToggleNameBtn.MouseEnter:Connect(function()
+    ToggleNameBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
 end)
 
-ToggleButton.MouseLeave:Connect(function()
-    ToggleButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+ToggleNameBtn.MouseLeave:Connect(function()
+    ToggleNameBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 end)
 
--- Resize Funktionalität
-local resizing = false
-local startSize = MainFrame.Size
-local startPos = Vector2.new(0, 0)
-
-ResizeHandle.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        resizing = true
-        startSize = MainFrame.Size
-        startPos = Vector2.new(input.Position.X, input.Position.Y)
-    end
+ToggleUnsichtBtn.MouseEnter:Connect(function()
+    ToggleUnsichtBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
 end)
 
-ResizeHandle.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        resizing = false
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if resizing and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local delta = Vector2.new(input.Position.X - startPos.X, input.Position.Y - startPos.Y)
-        local newWidth = math.max(250, startSize.X.Offset + delta.X)
-        local newHeight = math.max(120, startSize.Y.Offset + delta.Y)
-        MainFrame.Size = UDim2.new(0, newWidth, 0, newHeight)
-    end
+ToggleUnsichtBtn.MouseLeave:Connect(function()
+    ToggleUnsichtBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 end)
 
 -- Character Respawn Handler
 player.CharacterAdded:Connect(function()
     task.wait(1)
-    if nameHidden then
-        hidePlayerName()
-    end
+    if nameHidden then hideName() end
+    if charInvisible then makeInvisible() end
 end)
 
 -- Bestätigung
-print("✅ Name Unsichtbar GUI geladen!")
-warn("🎮 Das GUI sollte jetzt sichtbar sein!")
+print("✅ Unsichtbarkeits GUI geladen!")
+print("📋 Name: Versteckt deinen Namen")
+print("👻 Unsichtbar: Macht dich komplett unsichtbar")
