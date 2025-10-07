@@ -171,7 +171,7 @@ local function makeCompletelyInvisible()
     local humanoid = character:FindFirstChildOfClass("Humanoid")
     if humanoid then
         originalName = humanoid.DisplayName
-        humanoid.DisplayName = ""
+        humanoid.DisplayName = " "
         humanoid.HealthDisplayDistance = 0
         humanoid.NameDisplayDistance = 0
     end
@@ -186,11 +186,16 @@ local function makeCompletelyInvisible()
         end
     end
     
-    -- Alle Körperteile unsichtbar machen
+    -- Alle Körperteile unsichtbar machen (für andere Spieler sichtbar durch LocalTransparencyModifier)
     for _, part in pairs(character:GetChildren()) do
         if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
             originalTransparency[part] = part.Transparency
             part.Transparency = 1
+            
+            -- LocalTransparencyModifier für lokale Sichtbarkeit
+            if part:IsA("BasePart") then
+                part.LocalTransparencyModifier = 0
+            end
             
             -- Face Decal verstecken
             local face = part:FindFirstChildOfClass("Decal")
@@ -204,6 +209,7 @@ local function makeCompletelyInvisible()
             if handle and handle:IsA("BasePart") then
                 originalTransparency[handle] = handle.Transparency
                 handle.Transparency = 1
+                handle.LocalTransparencyModifier = 0
             end
         end
     end
@@ -211,9 +217,14 @@ local function makeCompletelyInvisible()
     -- Kleidung verstecken
     for _, clothing in pairs(character:GetChildren()) do
         if clothing:IsA("Shirt") or clothing:IsA("Pants") or clothing:IsA("ShirtGraphic") then
-            originalTransparency[clothing] = clothing.Enabled or true
             clothing:Destroy()
         end
+    end
+    
+    -- Body Colors auf unsichtbar setzen
+    local bodyColors = character:FindFirstChild("Body Colors")
+    if bodyColors then
+        bodyColors:Destroy()
     end
 end
 
@@ -245,6 +256,11 @@ local function makeCompletelyVisible()
     for part, transparency in pairs(originalTransparency) do
         if part and part.Parent then
             part.Transparency = transparency
+            
+            -- LocalTransparencyModifier zurücksetzen
+            if part:IsA("BasePart") then
+                part.LocalTransparencyModifier = 1
+            end
         end
     end
     
@@ -312,5 +328,6 @@ end)
 
 -- Bestätigung
 print("✅ Unsichtbarkeits GUI geladen!")
-print("👻 Macht Charakter + Name komplett unsichtbar!")
-print("💡 Tipp: Andere Spieler können dich nicht mehr sehen!")
+print("👻 Du bist für ANDERE Spieler unsichtbar!")
+print("💡 Du kannst dich selbst noch sehen (nur du!)")
+print("⚠️ Hinweis: Funktioniert nur bei Games mit FE (Filtering Enabled)")
