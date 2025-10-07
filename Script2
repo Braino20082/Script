@@ -167,11 +167,23 @@ local function makeCompletelyInvisible()
     local character = player.Character
     if not character then return end
     
-    -- Name verstecken
+    -- Name verstecken (mehrere Methoden)
     local humanoid = character:FindFirstChildOfClass("Humanoid")
     if humanoid then
         originalName = humanoid.DisplayName
         humanoid.DisplayName = ""
+        humanoid.HealthDisplayDistance = 0
+        humanoid.NameDisplayDistance = 0
+    end
+    
+    -- Nametag/Billboard entfernen
+    local head = character:FindFirstChild("Head")
+    if head then
+        for _, obj in pairs(head:GetChildren()) do
+            if obj:IsA("BillboardGui") then
+                obj.Enabled = false
+            end
+        end
     end
     
     -- Alle Körperteile unsichtbar machen
@@ -209,10 +221,24 @@ local function makeCompletelyVisible()
     local character = player.Character
     if not character then return end
     
-    -- Name wieder anzeigen
+    -- Name wieder anzeigen (mehrere Methoden)
     local humanoid = character:FindFirstChildOfClass("Humanoid")
-    if humanoid and originalName ~= "" then
-        humanoid.DisplayName = originalName
+    if humanoid then
+        if originalName ~= "" then
+            humanoid.DisplayName = originalName
+        end
+        humanoid.HealthDisplayDistance = 100
+        humanoid.NameDisplayDistance = 100
+    end
+    
+    -- Nametag/Billboard wieder aktivieren
+    local head = character:FindFirstChild("Head")
+    if head then
+        for _, obj in pairs(head:GetChildren()) do
+            if obj:IsA("BillboardGui") then
+                obj.Enabled = true
+            end
+        end
     end
     
     -- Alle Körperteile wieder sichtbar machen
@@ -234,12 +260,12 @@ ToggleUnsichtBtn.MouseButton1Click:Connect(function()
         makeCompletelyInvisible()
         UnsichtStatus.Text = "ON"
         UnsichtStatus.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
-        print("👻 Du bist jetzt unsichtbar!")
+        print("👻 Du bist jetzt unsichtbar! (Charakter + Name)")
     else
         makeCompletelyVisible()
         UnsichtStatus.Text = "OFF"
         UnsichtStatus.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-        print("✅ Du bist wieder sichtbar!")
+        print("✅ Du bist wieder sichtbar! (Charakter + Name)")
     end
 end)
 
@@ -286,4 +312,5 @@ end)
 
 -- Bestätigung
 print("✅ Unsichtbarkeits GUI geladen!")
-print("👻 Macht dich & deinen Namen komplett unsichtbar!")
+print("👻 Macht Charakter + Name komplett unsichtbar!")
+print("💡 Tipp: Andere Spieler können dich nicht mehr sehen!")
