@@ -274,14 +274,32 @@ ToggleUnsichtBtn.MouseButton1Click:Connect(function()
     
     if isInvisible then
         makeCompletelyInvisible()
+        
+        -- Teleportiere unter die Map (Alternative Methode)
+        local character = player.Character
+        if character and character:FindFirstChild("HumanoidRootPart") then
+            local hrp = character.HumanoidRootPart
+            -- Speichere alte Position
+            _G.OldPosition = hrp.CFrame
+            -- Teleportiere weit unter die Map
+            hrp.CFrame = CFrame.new(hrp.Position.X, -500, hrp.Position.Z)
+        end
+        
         UnsichtStatus.Text = "ON"
         UnsichtStatus.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
-        print("👻 Du bist jetzt unsichtbar! (Charakter + Name)")
+        print("👻 Du bist jetzt unter der Map! (Für andere unsichtbar)")
     else
         makeCompletelyVisible()
+        
+        -- Teleportiere zurück
+        local character = player.Character
+        if character and character:FindFirstChild("HumanoidRootPart") and _G.OldPosition then
+            character.HumanoidRootPart.CFrame = _G.OldPosition
+        end
+        
         UnsichtStatus.Text = "OFF"
         UnsichtStatus.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-        print("✅ Du bist wieder sichtbar! (Charakter + Name)")
+        print("✅ Du bist wieder normal sichtbar!")
     end
 end)
 
@@ -328,6 +346,7 @@ end)
 
 -- Bestätigung
 print("✅ Unsichtbarkeits GUI geladen!")
-print("👻 Du bist für ANDERE Spieler unsichtbar!")
-print("💡 Du kannst dich selbst noch sehen (nur du!)")
-print("⚠️ Hinweis: Funktioniert nur bei Games mit FE (Filtering Enabled)")
+print("👻 Methode: Teleportiert dich unter die Map")
+print("💡 Andere Spieler können dich SO nicht mehr sehen!")
+print("⚠️ ACHTUNG: Client-Side kann dich nicht wirklich unsichtbar machen")
+print("📍 Du wirst unter die Map teleportiert (Y: -500)")
