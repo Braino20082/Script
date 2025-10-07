@@ -16,8 +16,9 @@ local ResizeHandle = Instance.new("Frame")
 
 -- GUI Eigenschaften
 ScreenGui.Name = "UnsichtbarGUI"
-ScreenGui.Parent = game.CoreGui
+ScreenGui.Parent = game:GetService("CoreGui")
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.ResetOnSpawn = false
 
 -- Main Frame
 MainFrame.Name = "MainFrame"
@@ -25,10 +26,11 @@ MainFrame.Parent = ScreenGui
 MainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 MainFrame.BorderSizePixel = 2
 MainFrame.BorderColor3 = Color3.fromRGB(60, 60, 60)
-MainFrame.Position = UDim2.new(0.3, 0, 0.3, 0)
+MainFrame.Position = UDim2.new(0.35, 0, 0.35, 0)
 MainFrame.Size = UDim2.new(0, 300, 0, 150)
 MainFrame.Active = true
 MainFrame.Draggable = true
+MainFrame.Visible = true
 
 -- Title Bar
 TitleBar.Name = "TitleBar"
@@ -219,4 +221,12 @@ player.CharacterAdded:Connect(function(newChar)
     end
 end)
 
-print("Name Unsichtbar GUI geladen!")
+-- Bestätigung
+print("✅ Name Unsichtbar GUI erfolgreich geladen!")
+print("🎮 GUI ist jetzt sichtbar - viel Spaß!")
+
+-- GUI kurz animieren beim Start
+wait(0.1)
+MainFrame.Size = UDim2.new(0, 250, 0, 120)
+wait(0.1)
+MainFrame.Size = UDim2.new(0, 300, 0, 150)
