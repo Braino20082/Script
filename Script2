@@ -1,50 +1,50 @@
--- Roblox Executor Script - Namens Unsichtbarkeit GUI
+-- Roblox Name Unsichtbar GUI - Vereinfacht
 
-local player = game:GetService("Players").LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-
--- Warte bis Character vollständig geladen ist
-if not character:FindFirstChild("HumanoidRootPart") then
-    character:WaitForChild("HumanoidRootPart")
-end
+-- Services
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local player = Players.LocalPlayer
 
 -- GUI Erstellen
 local ScreenGui = Instance.new("ScreenGui")
-local MainFrame = Instance.new("Frame")
-local TitleBar = Instance.new("Frame")
-local Title = Instance.new("TextLabel")
-local CloseButton = Instance.new("TextButton")
-local ContentFrame = Instance.new("Frame")
-local StatusLabel = Instance.new("TextLabel")
-local ToggleButton = Instance.new("TextButton")
-local ResizeHandle = Instance.new("Frame")
-
--- GUI Eigenschaften
-ScreenGui.Name = "UnsichtbarGUI"
-ScreenGui.Parent = game:GetService("CoreGui")
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Name = "NameUnsichtbarGUI"
 ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = player:WaitForChild("PlayerGui")
 
 -- Main Frame
+local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Parent = ScreenGui
 MainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 MainFrame.BorderSizePixel = 2
 MainFrame.BorderColor3 = Color3.fromRGB(60, 60, 60)
-MainFrame.Position = UDim2.new(0.35, 0, 0.35, 0)
+MainFrame.Position = UDim2.new(0.4, 0, 0.4, 0)
 MainFrame.Size = UDim2.new(0, 300, 0, 150)
 MainFrame.Active = true
 MainFrame.Draggable = true
-MainFrame.Visible = true
+
+-- Schatten Effekt
+local Shadow = Instance.new("Frame")
+Shadow.Name = "Shadow"
+Shadow.Parent = MainFrame
+Shadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Shadow.BackgroundTransparency = 0.5
+Shadow.BorderSizePixel = 0
+Shadow.Position = UDim2.new(0, 5, 0, 5)
+Shadow.Size = UDim2.new(1, 0, 1, 0)
+Shadow.ZIndex = 0
 
 -- Title Bar
+local TitleBar = Instance.new("Frame")
 TitleBar.Name = "TitleBar"
 TitleBar.Parent = MainFrame
 TitleBar.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
 TitleBar.BorderSizePixel = 0
 TitleBar.Size = UDim2.new(1, 0, 0, 35)
+TitleBar.ZIndex = 2
 
 -- Title
+local Title = Instance.new("TextLabel")
 Title.Name = "Title"
 Title.Parent = TitleBar
 Title.BackgroundTransparency = 1
@@ -55,8 +55,10 @@ Title.Text = "Name Unsichtbar"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 16
 Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.ZIndex = 3
 
 -- Close Button
+local CloseButton = Instance.new("TextButton")
 CloseButton.Name = "CloseButton"
 CloseButton.Parent = TitleBar
 CloseButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
@@ -67,114 +69,96 @@ CloseButton.Font = Enum.Font.GothamBold
 CloseButton.Text = "X"
 CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 CloseButton.TextSize = 14
-
--- Content Frame
-ContentFrame.Name = "ContentFrame"
-ContentFrame.Parent = MainFrame
-ContentFrame.BackgroundTransparency = 1
-ContentFrame.Position = UDim2.new(0, 0, 0, 35)
-ContentFrame.Size = UDim2.new(1, 0, 1, -35)
+CloseButton.ZIndex = 3
 
 -- Status Label
+local StatusLabel = Instance.new("TextLabel")
 StatusLabel.Name = "StatusLabel"
-StatusLabel.Parent = ContentFrame
+StatusLabel.Parent = MainFrame
 StatusLabel.BackgroundTransparency = 1
-StatusLabel.Position = UDim2.new(0, 20, 0, 25)
-StatusLabel.Size = UDim2.new(0, 250, 0, 30)
+StatusLabel.Position = UDim2.new(0, 20, 0, 60)
+StatusLabel.Size = UDim2.new(0, 260, 0, 30)
 StatusLabel.Font = Enum.Font.Gotham
 StatusLabel.Text = "Name Unsichtbar: OFF"
 StatusLabel.TextColor3 = Color3.fromRGB(200, 50, 50)
 StatusLabel.TextSize = 14
-StatusLabel.TextXAlignment = Enum.TextXAlignment.Left
+StatusLabel.ZIndex = 2
 
 -- Toggle Button
+local ToggleButton = Instance.new("TextButton")
 ToggleButton.Name = "ToggleButton"
-ToggleButton.Parent = ContentFrame
+ToggleButton.Parent = MainFrame
 ToggleButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 ToggleButton.BorderSizePixel = 0
-ToggleButton.Position = UDim2.new(0, 20, 0, 65)
+ToggleButton.Position = UDim2.new(0, 20, 0, 100)
 ToggleButton.Size = UDim2.new(0, 260, 0, 35)
 ToggleButton.Font = Enum.Font.GothamBold
 ToggleButton.Text = "Toggle Name"
 ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 ToggleButton.TextSize = 14
+ToggleButton.ZIndex = 2
 
 -- Resize Handle
+local ResizeHandle = Instance.new("TextLabel")
 ResizeHandle.Name = "ResizeHandle"
 ResizeHandle.Parent = MainFrame
 ResizeHandle.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
 ResizeHandle.BorderSizePixel = 0
 ResizeHandle.Position = UDim2.new(1, -15, 1, -15)
 ResizeHandle.Size = UDim2.new(0, 15, 0, 15)
+ResizeHandle.Text = ""
+ResizeHandle.ZIndex = 2
 
 -- Variablen
-local nameVisible = true
+local nameHidden = false
 local originalName = ""
 
 -- Funktionen
 local function hidePlayerName()
+    local character = player.Character
     if not character then return end
     
     local humanoid = character:FindFirstChildOfClass("Humanoid")
     if humanoid then
         originalName = humanoid.DisplayName
-        humanoid.DisplayName = " "
-    end
-    
-    -- Nametag entfernen
-    local head = character:FindFirstChild("Head")
-    if head then
-        for _, v in pairs(head:GetChildren()) do
-            if v:IsA("BillboardGui") then
-                v.Enabled = false
-            end
-        end
+        humanoid.DisplayName = ""
     end
 end
 
 local function showPlayerName()
+    local character = player.Character
     if not character then return end
     
     local humanoid = character:FindFirstChildOfClass("Humanoid")
-    if humanoid and originalName ~= "" then
+    if humanoid then
         humanoid.DisplayName = originalName
-    end
-    
-    -- Nametag wieder anzeigen
-    local head = character:FindFirstChild("Head")
-    if head then
-        for _, v in pairs(head:GetChildren()) do
-            if v:IsA("BillboardGui") then
-                v.Enabled = true
-            end
-        end
     end
 end
 
--- Toggle Funktion
+-- Toggle Button Event
 ToggleButton.MouseButton1Click:Connect(function()
-    nameVisible = not nameVisible
+    nameHidden = not nameHidden
     
-    if nameVisible then
-        showPlayerName()
-        StatusLabel.Text = "Name Unsichtbar: OFF"
-        StatusLabel.TextColor3 = Color3.fromRGB(200, 50, 50)
-    else
+    if nameHidden then
         hidePlayerName()
         StatusLabel.Text = "Name Unsichtbar: ON"
         StatusLabel.TextColor3 = Color3.fromRGB(50, 200, 50)
+    else
+        showPlayerName()
+        StatusLabel.Text = "Name Unsichtbar: OFF"
+        StatusLabel.TextColor3 = Color3.fromRGB(200, 50, 50)
     end
 end)
 
--- Close Button Funktion
+-- Close Button Event
 CloseButton.MouseButton1Click:Connect(function()
-    ScreenGui:Destroy()
-    if not nameVisible then
+    if nameHidden then
         showPlayerName()
     end
+    ScreenGui:Destroy()
 end)
 
--- Hover Effekt Close Button
+-- Hover Effekte
 CloseButton.MouseEnter:Connect(function()
     CloseButton.BackgroundColor3 = Color3.fromRGB(255, 70, 70)
 end)
@@ -183,7 +167,6 @@ CloseButton.MouseLeave:Connect(function()
     CloseButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
 end)
 
--- Hover Effekt Toggle Button
 ToggleButton.MouseEnter:Connect(function()
     ToggleButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
 end)
@@ -194,61 +177,40 @@ end)
 
 -- Resize Funktionalität
 local resizing = false
-local UserInputService = game:GetService("UserInputService")
+local startSize = MainFrame.Size
+local startPos = Vector2.new(0, 0)
 
 ResizeHandle.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or 
-       input.UserInputType == Enum.UserInputType.Touch then
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
         resizing = true
+        startSize = MainFrame.Size
+        startPos = Vector2.new(input.Position.X, input.Position.Y)
     end
 end)
 
 ResizeHandle.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or 
-       input.UserInputType == Enum.UserInputType.Touch then
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
         resizing = false
     end
 end)
 
 UserInputService.InputChanged:Connect(function(input)
     if resizing and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local success, mousePos = pcall(function()
-            return UserInputService:GetMouseLocation()
-        end)
-        
-        if success and mousePos then
-            local guiPos = MainFrame.AbsolutePosition
-            
-            local newWidth = math.max(250, mousePos.X - guiPos.X)
-            local newHeight = math.max(120, mousePos.Y - guiPos.Y)
-            
-            MainFrame.Size = UDim2.new(0, newWidth, 0, newHeight)
-        end
+        local delta = Vector2.new(input.Position.X - startPos.X, input.Position.Y - startPos.Y)
+        local newWidth = math.max(250, startSize.X.Offset + delta.X)
+        local newHeight = math.max(120, startSize.Y.Offset + delta.Y)
+        MainFrame.Size = UDim2.new(0, newWidth, 0, newHeight)
     end
 end)
 
 -- Character Respawn Handler
-player.CharacterAdded:Connect(function(newChar)
-    character = newChar
-    wait(0.5)
-    if character:FindFirstChildOfClass("Humanoid") then
-        if not nameVisible then
-            wait(0.2)
-            hidePlayerName()
-        end
+player.CharacterAdded:Connect(function()
+    task.wait(1)
+    if nameHidden then
+        hidePlayerName()
     end
 end)
 
 -- Bestätigung
-print("✅ Name Unsichtbar GUI erfolgreich geladen!")
-print("🎮 GUI ist jetzt sichtbar - viel Spaß!")
-
--- GUI kurz animieren beim Start (mit pcall für Sicherheit)
-spawn(function()
-    wait(0.1)
-    pcall(function()
-        MainFrame.Size = UDim2.new(0, 250, 0, 120)
-        wait(0.1)
-        MainFrame.Size = UDim2.new(0, 300, 0, 150)
-    end)
-end)
+print("✅ Name Unsichtbar GUI geladen!")
+warn("🎮 Das GUI sollte jetzt sichtbar sein!")
