@@ -85,49 +85,13 @@ ContentFrame.BackgroundTransparency = 1
 ContentFrame.Position = UDim2.new(0, 0, 0, 45)
 ContentFrame.Size = UDim2.new(1, 0, 1, -45)
 
--- Name Label
-local NameLabel = Instance.new("TextLabel")
-NameLabel.Name = "NameLabel"
-NameLabel.Parent = ContentFrame
-NameLabel.BackgroundTransparency = 1
-NameLabel.Position = UDim2.new(0, 15, 0, 10)
-NameLabel.Size = UDim2.new(0.5, -20, 0, 30)
-NameLabel.Font = Enum.Font.Gotham
-NameLabel.Text = "Name:"
-NameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-NameLabel.TextSize = 16
-NameLabel.TextScaled = true
-NameLabel.TextXAlignment = Enum.TextXAlignment.Left
-
-local NameConstraint = Instance.new("UITextSizeConstraint")
-NameConstraint.MaxTextSize = 16
-NameConstraint.Parent = NameLabel
-
--- Name Status
-local NameStatus = Instance.new("TextLabel")
-NameStatus.Name = "NameStatus"
-NameStatus.Parent = ContentFrame
-NameStatus.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-NameStatus.BorderSizePixel = 0
-NameStatus.Position = UDim2.new(0.5, 5, 0, 10)
-NameStatus.Size = UDim2.new(0.5, -20, 0, 30)
-NameStatus.Font = Enum.Font.GothamBold
-NameStatus.Text = "OFF"
-NameStatus.TextColor3 = Color3.fromRGB(255, 255, 255)
-NameStatus.TextSize = 16
-NameStatus.TextScaled = true
-
-local NameStatusCorner = Instance.new("UICorner")
-NameStatusCorner.CornerRadius = UDim.new(0, 6)
-NameStatusCorner.Parent = NameStatus
-
 -- Unsichtbar Label
 local UnsichtLabel = Instance.new("TextLabel")
 UnsichtLabel.Name = "UnsichtLabel"
 UnsichtLabel.Parent = ContentFrame
 UnsichtLabel.BackgroundTransparency = 1
-UnsichtLabel.Position = UDim2.new(0, 15, 0, 50)
-UnsichtLabel.Size = UDim2.new(0.5, -20, 0, 30)
+UnsichtLabel.Position = UDim2.new(0, 15, 0, 20)
+UnsichtLabel.Size = UDim2.new(0.5, -20, 0, 35)
 UnsichtLabel.Font = Enum.Font.Gotham
 UnsichtLabel.Text = "Unsichtbar:"
 UnsichtLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -145,8 +109,8 @@ UnsichtStatus.Name = "UnsichtStatus"
 UnsichtStatus.Parent = ContentFrame
 UnsichtStatus.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
 UnsichtStatus.BorderSizePixel = 0
-UnsichtStatus.Position = UDim2.new(0.5, 5, 0, 50)
-UnsichtStatus.Size = UDim2.new(0.5, -20, 0, 30)
+UnsichtStatus.Position = UDim2.new(0.5, 5, 0, 20)
+UnsichtStatus.Size = UDim2.new(0.5, -20, 0, 35)
 UnsichtStatus.Font = Enum.Font.GothamBold
 UnsichtStatus.Text = "OFF"
 UnsichtStatus.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -157,32 +121,14 @@ local UnsichtStatusCorner = Instance.new("UICorner")
 UnsichtStatusCorner.CornerRadius = UDim.new(0, 6)
 UnsichtStatusCorner.Parent = UnsichtStatus
 
--- Toggle Name Button
-local ToggleNameBtn = Instance.new("TextButton")
-ToggleNameBtn.Name = "ToggleNameBtn"
-ToggleNameBtn.Parent = ContentFrame
-ToggleNameBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-ToggleNameBtn.BorderSizePixel = 0
-ToggleNameBtn.Position = UDim2.new(0, 15, 0, 95)
-ToggleNameBtn.Size = UDim2.new(1, -30, 0, 25)
-ToggleNameBtn.Font = Enum.Font.GothamBold
-ToggleNameBtn.Text = "Toggle Name"
-ToggleNameBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-ToggleNameBtn.TextSize = 14
-ToggleNameBtn.TextScaled = true
-
-local ToggleNameCorner = Instance.new("UICorner")
-ToggleNameCorner.CornerRadius = UDim.new(0, 6)
-ToggleNameCorner.Parent = ToggleNameBtn
-
 -- Toggle Unsichtbar Button
 local ToggleUnsichtBtn = Instance.new("TextButton")
 ToggleUnsichtBtn.Name = "ToggleUnsichtBtn"
 ToggleUnsichtBtn.Parent = ContentFrame
 ToggleUnsichtBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 ToggleUnsichtBtn.BorderSizePixel = 0
-ToggleUnsichtBtn.Position = UDim2.new(0, 15, 0, 125)
-ToggleUnsichtBtn.Size = UDim2.new(1, -30, 0, 25)
+ToggleUnsichtBtn.Position = UDim2.new(0, 15, 0, 80)
+ToggleUnsichtBtn.Size = UDim2.new(1, -30, 0, 35)
 ToggleUnsichtBtn.Font = Enum.Font.GothamBold
 ToggleUnsichtBtn.Text = "Toggle Unsichtbar"
 ToggleUnsichtBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -193,40 +139,47 @@ local ToggleUnsichtCorner = Instance.new("UICorner")
 ToggleUnsichtCorner.CornerRadius = UDim.new(0, 6)
 ToggleUnsichtCorner.Parent = ToggleUnsichtBtn
 
+-- Info Label
+local InfoLabel = Instance.new("TextLabel")
+InfoLabel.Name = "InfoLabel"
+InfoLabel.Parent = ContentFrame
+InfoLabel.BackgroundTransparency = 1
+InfoLabel.Position = UDim2.new(0, 15, 0, 125)
+InfoLabel.Size = UDim2.new(1, -30, 0, 25)
+InfoLabel.Font = Enum.Font.Gotham
+InfoLabel.Text = "Macht dich & deinen Namen unsichtbar"
+InfoLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+InfoLabel.TextSize = 12
+InfoLabel.TextScaled = true
+InfoLabel.TextWrapped = true
+
+local InfoConstraint = Instance.new("UITextSizeConstraint")
+InfoConstraint.MaxTextSize = 12
+InfoConstraint.Parent = InfoLabel
+
 -- Variablen
-local nameHidden = false
-local charInvisible = false
+local isInvisible = false
 local originalName = ""
 local originalTransparency = {}
 
 -- Funktionen
-local function hideName()
+local function makeCompletelyInvisible()
     local character = player.Character
     if not character then return end
     
+    -- Name verstecken
     local humanoid = character:FindFirstChildOfClass("Humanoid")
     if humanoid then
         originalName = humanoid.DisplayName
         humanoid.DisplayName = ""
     end
-end
-
-local function showName()
-    local character = player.Character
-    if not character then return end
     
-    local humanoid = character:FindFirstChildOfClass("Humanoid")
-    if humanoid then
-        humanoid.DisplayName = originalName
-    end
-end
-
-local function makeInvisible()
-    local character = player.Character
-    if not character then return end
-    
+    -- Charakter unsichtbar machen
     for _, part in pairs(character:GetDescendants()) do
-        if part:IsA("BasePart") or part:IsA("Decal") then
+        if part:IsA("BasePart") then
+            originalTransparency[part] = part.Transparency
+            part.Transparency = 1
+        elseif part:IsA("Decal") then
             originalTransparency[part] = part.Transparency
             part.Transparency = 1
         elseif part:IsA("Accessory") then
@@ -239,44 +192,34 @@ local function makeInvisible()
     end
 end
 
-local function makeVisible()
+local function makeCompletelyVisible()
     local character = player.Character
     if not character then return end
     
+    -- Name wieder anzeigen
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if humanoid then
+        humanoid.DisplayName = originalName
+    end
+    
+    -- Charakter sichtbar machen
     for _, part in pairs(character:GetDescendants()) do
-        if part:IsA("BasePart") or part:IsA("Decal") then
-            if originalTransparency[part] then
-                part.Transparency = originalTransparency[part]
-            end
+        if (part:IsA("BasePart") or part:IsA("Decal")) and originalTransparency[part] then
+            part.Transparency = originalTransparency[part]
         end
     end
 end
 
--- Toggle Name Event
-ToggleNameBtn.MouseButton1Click:Connect(function()
-    nameHidden = not nameHidden
-    
-    if nameHidden then
-        hideName()
-        NameStatus.Text = "ON"
-        NameStatus.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
-    else
-        showName()
-        NameStatus.Text = "OFF"
-        NameStatus.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-    end
-end)
-
 -- Toggle Unsichtbar Event
 ToggleUnsichtBtn.MouseButton1Click:Connect(function()
-    charInvisible = not charInvisible
+    isInvisible = not isInvisible
     
-    if charInvisible then
-        makeInvisible()
+    if isInvisible then
+        makeCompletelyInvisible()
         UnsichtStatus.Text = "ON"
         UnsichtStatus.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
     else
-        makeVisible()
+        makeCompletelyVisible()
         UnsichtStatus.Text = "OFF"
         UnsichtStatus.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
     end
@@ -284,8 +227,9 @@ end)
 
 -- Close Button Event
 CloseButton.MouseButton1Click:Connect(function()
-    if nameHidden then showName() end
-    if charInvisible then makeVisible() end
+    if isInvisible then
+        makeCompletelyVisible()
+    end
     ScreenGui:Destroy()
 end)
 
@@ -317,11 +261,11 @@ end)
 -- Character Respawn Handler
 player.CharacterAdded:Connect(function()
     task.wait(1)
-    if nameHidden then hideName() end
-    if charInvisible then makeInvisible() end
+    if isInvisible then
+        makeCompletelyInvisible()
+    end
 end)
 
 -- Bestätigung
 print("✅ Unsichtbarkeits GUI geladen!")
-print("📋 Name: Versteckt deinen Namen")
-print("👻 Unsichtbar: Macht dich komplett unsichtbar")
+print("👻 Macht dich & deinen Namen komplett unsichtbar!")
