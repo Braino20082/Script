@@ -1,7 +1,12 @@
 -- Roblox Executor Script - Namens Unsichtbarkeit GUI
 
-local player = game.Players.LocalPlayer
+local player = game:GetService("Players").LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
+
+-- Warte bis Character vollständig geladen ist
+if not character:FindFirstChild("HumanoidRootPart") then
+    character:WaitForChild("HumanoidRootPart")
+end
 
 -- GUI Erstellen
 local ScreenGui = Instance.new("ScreenGui")
@@ -108,6 +113,8 @@ local originalName = ""
 
 -- Funktionen
 local function hidePlayerName()
+    if not character then return end
+    
     local humanoid = character:FindFirstChildOfClass("Humanoid")
     if humanoid then
         originalName = humanoid.DisplayName
@@ -115,28 +122,30 @@ local function hidePlayerName()
     end
     
     -- Nametag entfernen
-    for _, v in pairs(character:GetChildren()) do
-        if v:IsA("BillboardGui") or v.Name == "Head" then
-            local billboard = v:FindFirstChild("HealthBar") or v:FindFirstChild("Nametag")
-            if billboard then
-                billboard.Enabled = false
+    local head = character:FindFirstChild("Head")
+    if head then
+        for _, v in pairs(head:GetChildren()) do
+            if v:IsA("BillboardGui") then
+                v.Enabled = false
             end
         end
     end
 end
 
 local function showPlayerName()
+    if not character then return end
+    
     local humanoid = character:FindFirstChildOfClass("Humanoid")
     if humanoid and originalName ~= "" then
         humanoid.DisplayName = originalName
     end
     
     -- Nametag wieder anzeigen
-    for _, v in pairs(character:GetChildren()) do
-        if v:IsA("BillboardGui") or v.Name == "Head" then
-            local billboard = v:FindFirstChild("HealthBar") or v:FindFirstChild("Nametag")
-            if billboard then
-                billboard.Enabled = true
+    local head = character:FindFirstChild("Head")
+    if head then
+        for _, v in pairs(head:GetChildren()) do
+            if v:IsA("BillboardGui") then
+                v.Enabled = true
             end
         end
     end
@@ -188,36 +197,45 @@ local resizing = false
 local UserInputService = game:GetService("UserInputService")
 
 ResizeHandle.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+       input.UserInputType == Enum.UserInputType.Touch then
         resizing = true
     end
 end)
 
 ResizeHandle.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+       input.UserInputType == Enum.UserInputType.Touch then
         resizing = false
     end
 end)
 
 UserInputService.InputChanged:Connect(function(input)
     if resizing and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local mousePos = UserInputService:GetMouseLocation()
-        local guiPos = MainFrame.AbsolutePosition
+        local success, mousePos = pcall(function()
+            return UserInputService:GetMouseLocation()
+        end)
         
-        local newWidth = math.max(250, mousePos.X - guiPos.X)
-        local newHeight = math.max(120, mousePos.Y - guiPos.Y)
-        
-        MainFrame.Size = UDim2.new(0, newWidth, 0, newHeight)
+        if success and mousePos then
+            local guiPos = MainFrame.AbsolutePosition
+            
+            local newWidth = math.max(250, mousePos.X - guiPos.X)
+            local newHeight = math.max(120, mousePos.Y - guiPos.Y)
+            
+            MainFrame.Size = UDim2.new(0, newWidth, 0, newHeight)
+        end
     end
 end)
 
 -- Character Respawn Handler
 player.CharacterAdded:Connect(function(newChar)
     character = newChar
-    character:WaitForChild("Humanoid")
-    if not nameVisible then
-        wait(0.5)
-        hidePlayerName()
+    wait(0.5)
+    if character:FindFirstChildOfClass("Humanoid") then
+        if not nameVisible then
+            wait(0.2)
+            hidePlayerName()
+        end
     end
 end)
 
@@ -225,8 +243,12 @@ end)
 print("✅ Name Unsichtbar GUI erfolgreich geladen!")
 print("🎮 GUI ist jetzt sichtbar - viel Spaß!")
 
--- GUI kurz animieren beim Start
-wait(0.1)
-MainFrame.Size = UDim2.new(0, 250, 0, 120)
-wait(0.1)
-MainFrame.Size = UDim2.new(0, 300, 0, 150)
+-- GUI kurz animieren beim Start (mit pcall für Sicherheit)
+spawn(function()
+    wait(0.1)
+    pcall(function()
+        MainFrame.Size = UDim2.new(0, 250, 0, 120)
+        wait(0.1)
+        MainFrame.Size = UDim2.new(0, 300, 0, 150)
+    end)
+end)
