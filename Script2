@@ -1,156 +1,222 @@
--- Lua GUI Script mit Unsichtbar Toggle
+-- Roblox Executor Script - Namens Unsichtbarkeit GUI
 
--- GUI Variablen
-local guiVisible = true
-local unsichtbar = false
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
 
--- GUI Position und Größe
-local guiX = 100
-local guiY = 100
-local guiWidth = 250
-local guiHeight = 100
+-- GUI Erstellen
+local ScreenGui = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local TitleBar = Instance.new("Frame")
+local Title = Instance.new("TextLabel")
+local CloseButton = Instance.new("TextButton")
+local ContentFrame = Instance.new("Frame")
+local StatusLabel = Instance.new("TextLabel")
+local ToggleButton = Instance.new("TextButton")
+local ResizeHandle = Instance.new("Frame")
 
--- Drag & Resize Variablen
-local dragging = false
-local resizing = false
-local dragOffsetX = 0
-local dragOffsetY = 0
-local resizeCornerSize = 15
+-- GUI Eigenschaften
+ScreenGui.Name = "UnsichtbarGUI"
+ScreenGui.Parent = game.CoreGui
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- Funktion zum Zeichnen des GUI
-function drawGUI()
-    if not guiVisible then return end
+-- Main Frame
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+MainFrame.BorderSizePixel = 2
+MainFrame.BorderColor3 = Color3.fromRGB(60, 60, 60)
+MainFrame.Position = UDim2.new(0.3, 0, 0.3, 0)
+MainFrame.Size = UDim2.new(0, 300, 0, 150)
+MainFrame.Active = true
+MainFrame.Draggable = true
+
+-- Title Bar
+TitleBar.Name = "TitleBar"
+TitleBar.Parent = MainFrame
+TitleBar.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+TitleBar.BorderSizePixel = 0
+TitleBar.Size = UDim2.new(1, 0, 0, 35)
+
+-- Title
+Title.Name = "Title"
+Title.Parent = TitleBar
+Title.BackgroundTransparency = 1
+Title.Position = UDim2.new(0, 10, 0, 0)
+Title.Size = UDim2.new(0.7, 0, 1, 0)
+Title.Font = Enum.Font.GothamBold
+Title.Text = "Name Unsichtbar"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 16
+Title.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Close Button
+CloseButton.Name = "CloseButton"
+CloseButton.Parent = TitleBar
+CloseButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+CloseButton.BorderSizePixel = 0
+CloseButton.Position = UDim2.new(1, -30, 0, 5)
+CloseButton.Size = UDim2.new(0, 25, 0, 25)
+CloseButton.Font = Enum.Font.GothamBold
+CloseButton.Text = "X"
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.TextSize = 14
+
+-- Content Frame
+ContentFrame.Name = "ContentFrame"
+ContentFrame.Parent = MainFrame
+ContentFrame.BackgroundTransparency = 1
+ContentFrame.Position = UDim2.new(0, 0, 0, 35)
+ContentFrame.Size = UDim2.new(1, 0, 1, -35)
+
+-- Status Label
+StatusLabel.Name = "StatusLabel"
+StatusLabel.Parent = ContentFrame
+StatusLabel.BackgroundTransparency = 1
+StatusLabel.Position = UDim2.new(0, 20, 0, 25)
+StatusLabel.Size = UDim2.new(0, 250, 0, 30)
+StatusLabel.Font = Enum.Font.Gotham
+StatusLabel.Text = "Name Unsichtbar: OFF"
+StatusLabel.TextColor3 = Color3.fromRGB(200, 50, 50)
+StatusLabel.TextSize = 14
+StatusLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Toggle Button
+ToggleButton.Name = "ToggleButton"
+ToggleButton.Parent = ContentFrame
+ToggleButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+ToggleButton.BorderSizePixel = 0
+ToggleButton.Position = UDim2.new(0, 20, 0, 65)
+ToggleButton.Size = UDim2.new(0, 260, 0, 35)
+ToggleButton.Font = Enum.Font.GothamBold
+ToggleButton.Text = "Toggle Name"
+ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleButton.TextSize = 14
+
+-- Resize Handle
+ResizeHandle.Name = "ResizeHandle"
+ResizeHandle.Parent = MainFrame
+ResizeHandle.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+ResizeHandle.BorderSizePixel = 0
+ResizeHandle.Position = UDim2.new(1, -15, 1, -15)
+ResizeHandle.Size = UDim2.new(0, 15, 0, 15)
+
+-- Variablen
+local nameVisible = true
+local originalName = ""
+
+-- Funktionen
+local function hidePlayerName()
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if humanoid then
+        originalName = humanoid.DisplayName
+        humanoid.DisplayName = " "
+    end
     
-    -- Hintergrund
-    love.graphics.setColor(0.2, 0.2, 0.2, 0.9)
-    love.graphics.rectangle("fill", guiX, guiY, guiWidth, guiHeight, 5, 5)
+    -- Nametag entfernen
+    for _, v in pairs(character:GetChildren()) do
+        if v:IsA("BillboardGui") or v.Name == "Head" then
+            local billboard = v:FindFirstChild("HealthBar") or v:FindFirstChild("Nametag")
+            if billboard then
+                billboard.Enabled = false
+            end
+        end
+    end
+end
+
+local function showPlayerName()
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if humanoid and originalName ~= "" then
+        humanoid.DisplayName = originalName
+    end
     
-    -- Rand
-    love.graphics.setColor(0.4, 0.4, 0.4, 1)
-    love.graphics.setLineWidth(2)
-    love.graphics.rectangle("line", guiX, guiY, guiWidth, guiHeight, 5, 5)
+    -- Nametag wieder anzeigen
+    for _, v in pairs(character:GetChildren()) do
+        if v:IsA("BillboardGui") or v.Name == "Head" then
+            local billboard = v:FindFirstChild("HealthBar") or v:FindFirstChild("Nametag")
+            if billboard then
+                billboard.Enabled = true
+            end
+        end
+    end
+end
+
+-- Toggle Funktion
+ToggleButton.MouseButton1Click:Connect(function()
+    nameVisible = not nameVisible
     
-    -- Titel
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.print("Einstellungen", guiX + 10, guiY + 10)
-    
-    -- Schließen Button (X)
-    love.graphics.setColor(0.8, 0.2, 0.2, 1)
-    love.graphics.rectangle("fill", guiX + guiWidth - 30, guiY + 5, 25, 25, 3, 3)
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.print("X", guiX + guiWidth - 22, guiY + 8)
-    
-    -- Unsichtbar Text
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.print("Unsichtbar:", guiX + 10, guiY + 50)
-    
-    -- ON/OFF Status
-    if unsichtbar then
-        love.graphics.setColor(0.2, 0.8, 0.2, 1)
-        love.graphics.print("ON", guiX + 100, guiY + 50)
+    if nameVisible then
+        showPlayerName()
+        StatusLabel.Text = "Name Unsichtbar: OFF"
+        StatusLabel.TextColor3 = Color3.fromRGB(200, 50, 50)
     else
-        love.graphics.setColor(0.8, 0.2, 0.2, 1)
-        love.graphics.print("OFF", guiX + 100, guiY + 50)
+        hidePlayerName()
+        StatusLabel.Text = "Name Unsichtbar: ON"
+        StatusLabel.TextColor3 = Color3.fromRGB(50, 200, 50)
     end
-    
-    -- Toggle Button
-    love.graphics.setColor(0.3, 0.3, 0.3, 1)
-    love.graphics.rectangle("fill", guiX + 150, guiY + 45, 80, 30, 3, 3)
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.print("Toggle", guiX + 160, guiY + 52)
-    
-    -- Resize Ecke (rechts unten)
-    love.graphics.setColor(0.5, 0.5, 0.5, 1)
-    love.graphics.polygon("fill", 
-        guiX + guiWidth, guiY + guiHeight,
-        guiX + guiWidth - resizeCornerSize, guiY + guiHeight,
-        guiX + guiWidth, guiY + guiHeight - resizeCornerSize
-    )
-end
+end)
 
--- Funktion für Mausklicks
-function love.mousepressed(x, y, button)
-    if button == 1 and guiVisible then
-        -- Schließen Button
-        if x >= guiX + guiWidth - 30 and x <= guiX + guiWidth - 5 and
-           y >= guiY + 5 and y <= guiY + 30 then
-            guiVisible = false
-            return
-        end
-        
-        -- Toggle Button
-        if x >= guiX + 150 and x <= guiX + 230 and
-           y >= guiY + 45 and y <= guiY + 75 then
-            unsichtbar = not unsichtbar
-            print("Unsichtbar ist jetzt: " .. (unsichtbar and "ON" or "OFF"))
-            return
-        end
-        
-        -- Resize Ecke prüfen
-        if x >= guiX + guiWidth - resizeCornerSize and x <= guiX + guiWidth and
-           y >= guiY + guiHeight - resizeCornerSize and y <= guiY + guiHeight then
-            resizing = true
-            return
-        end
-        
-        -- Verschieben (Titelleiste)
-        if x >= guiX and x <= guiX + guiWidth and
-           y >= guiY and y <= guiY + 35 then
-            dragging = true
-            dragOffsetX = x - guiX
-            dragOffsetY = y - guiY
-        end
+-- Close Button Funktion
+CloseButton.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+    if not nameVisible then
+        showPlayerName()
     end
-end
+end)
 
-function love.mousereleased(x, y, button)
-    if button == 1 then
-        dragging = false
+-- Hover Effekt Close Button
+CloseButton.MouseEnter:Connect(function()
+    CloseButton.BackgroundColor3 = Color3.fromRGB(255, 70, 70)
+end)
+
+CloseButton.MouseLeave:Connect(function()
+    CloseButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+end)
+
+-- Hover Effekt Toggle Button
+ToggleButton.MouseEnter:Connect(function()
+    ToggleButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+end)
+
+ToggleButton.MouseLeave:Connect(function()
+    ToggleButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+end)
+
+-- Resize Funktionalität
+local resizing = false
+local UserInputService = game:GetService("UserInputService")
+
+ResizeHandle.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        resizing = true
+    end
+end)
+
+ResizeHandle.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
         resizing = false
     end
-end
+end)
 
-function love.update(dt)
-    if guiVisible then
-        local mx, my = love.mouse.getPosition()
+UserInputService.InputChanged:Connect(function(input)
+    if resizing and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local mousePos = UserInputService:GetMouseLocation()
+        local guiPos = MainFrame.AbsolutePosition
         
-        -- Verschieben
-        if dragging then
-            guiX = mx - dragOffsetX
-            guiY = my - dragOffsetY
-        end
+        local newWidth = math.max(250, mousePos.X - guiPos.X)
+        local newHeight = math.max(120, mousePos.Y - guiPos.Y)
         
-        -- Größe ändern
-        if resizing then
-            guiWidth = math.max(200, mx - guiX)
-            guiHeight = math.max(80, my - guiY)
-        end
+        MainFrame.Size = UDim2.new(0, newWidth, 0, newHeight)
     end
-end
+end)
 
--- LÖVE2D Hauptfunktionen
-function love.load()
-    love.window.setTitle("Lua GUI Demo")
-    love.window.setMode(800, 600)
-end
-
-function love.draw()
-    love.graphics.setBackgroundColor(0.1, 0.1, 0.15)
-    
-    -- Info Text
-    love.graphics.setColor(1, 1, 1, 0.5)
-    love.graphics.print("Drücke 'G' um GUI anzuzeigen", 10, 10)
-    love.graphics.print("Ziehe am Fenster zum Verschieben", 10, 30)
-    love.graphics.print("Ziehe an der Ecke zum Größe ändern", 10, 50)
-    
-    drawGUI()
-end
-
-function love.keypressed(key)
-    if key == "g" then
-        guiVisible = true
+-- Character Respawn Handler
+player.CharacterAdded:Connect(function(newChar)
+    character = newChar
+    character:WaitForChild("Humanoid")
+    if not nameVisible then
+        wait(0.5)
+        hidePlayerName()
     end
-    if key == "escape" then
-        love.event.quit()
-    end
-end
+end)
+
+print("Name Unsichtbar GUI geladen!")
