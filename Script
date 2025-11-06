@@ -1,26 +1,31 @@
--- Brain AI GUI Script mit vollständiger Event-Anzeige
+-- LocalScript: BrainAIGui
+-- Platziere in StarterPlayerScripts oder als LocalScript in StarterGui
+
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local player = Players.LocalPlayer
 
--- Gespeicherte Events für das Starten
+-- Remotes (werden serverseitig erstellt / erwartet)
+local EventStart = ReplicatedStorage:WaitForChild("EventStart")
+local GiveItemReq = ReplicatedStorage:WaitForChild("GiveItemRequest")
+local EventBroadcast = ReplicatedStorage:WaitForChild("EventBroadcast")
+
+-- Lokale gespeicherte Events
 local savedEvents = {}
 
--- ScreenGui Setup
+-- GUI Aufbau (vereinfachte, saubere Variante)
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "BrainAIGui"
-ScreenGui.Parent = game.CoreGui
+ScreenGui.Parent = player:WaitForChild("PlayerGui") -- sicherer als CoreGui
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-ScreenGui.ResetOnSpawn = false
 
--- Main Frame
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Parent = ScreenGui
 MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 MainFrame.BorderSizePixel = 0
-MainFrame.Position = UDim2.new(0.25, 0, 0.15, 0)
-MainFrame.Size = UDim2.new(0, 700, 0, 500)
+MainFrame.Position = UDim2.new(0.3, 0, 0.2, 0)
+MainFrame.Size = UDim2.new(0, 600, 0, 400)
 MainFrame.Active = true
 MainFrame.Draggable = true
 
@@ -28,7 +33,6 @@ local UICorner = Instance.new("UICorner")
 UICorner.CornerRadius = UDim.new(0, 10)
 UICorner.Parent = MainFrame
 
--- Titel
 local TitleLabel = Instance.new("TextLabel")
 TitleLabel.Name = "TitleLabel"
 TitleLabel.Parent = MainFrame
@@ -36,15 +40,10 @@ TitleLabel.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 TitleLabel.BorderSizePixel = 0
 TitleLabel.Size = UDim2.new(1, 0, 0, 40)
 TitleLabel.Font = Enum.Font.GothamBold
-TitleLabel.Text = "Brain AI - Admin Event Manager"
+TitleLabel.Text = "Brain AI"
 TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 TitleLabel.TextSize = 20
 
-local TitleCorner = Instance.new("UICorner")
-TitleCorner.CornerRadius = UDim.new(0, 10)
-TitleCorner.Parent = TitleLabel
-
--- Close Button
 local CloseButton = Instance.new("TextButton")
 CloseButton.Name = "CloseButton"
 CloseButton.Parent = TitleLabel
@@ -56,11 +55,6 @@ CloseButton.Text = "X"
 CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 CloseButton.TextSize = 16
 
-local CloseCorner = Instance.new("UICorner")
-CloseCorner.CornerRadius = UDim.new(0, 5)
-CloseCorner.Parent = CloseButton
-
--- Event Button
 local EventButton = Instance.new("TextButton")
 EventButton.Name = "EventButton"
 EventButton.Parent = MainFrame
@@ -72,11 +66,6 @@ EventButton.Text = "Events"
 EventButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 EventButton.TextSize = 16
 
-local EventCorner = Instance.new("UICorner")
-EventCorner.CornerRadius = UDim.new(0, 8)
-EventCorner.Parent = EventButton
-
--- Events2 Button
 local Events2Button = Instance.new("TextButton")
 Events2Button.Name = "Events2Button"
 Events2Button.Parent = MainFrame
@@ -88,11 +77,6 @@ Events2Button.Text = "Events2"
 Events2Button.TextColor3 = Color3.fromRGB(255, 255, 255)
 Events2Button.TextSize = 16
 
-local Events2Corner = Instance.new("UICorner")
-Events2Corner.CornerRadius = UDim.new(0, 8)
-Events2Corner.Parent = Events2Button
-
--- Give Button
 local GiveButton = Instance.new("TextButton")
 GiveButton.Name = "GiveButton"
 GiveButton.Parent = MainFrame
@@ -104,610 +88,256 @@ GiveButton.Text = "Give"
 GiveButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 GiveButton.TextSize = 16
 
-local GiveCorner = Instance.new("UICorner")
-GiveCorner.CornerRadius = UDim.new(0, 8)
-GiveCorner.Parent = GiveButton
-
--- Refresh Button
-local RefreshButton = Instance.new("TextButton")
-RefreshButton.Name = "RefreshButton"
-RefreshButton.Parent = MainFrame
-RefreshButton.BackgroundColor3 = Color3.fromRGB(255, 150, 50)
-RefreshButton.Position = UDim2.new(0, 10, 0, 200)
-RefreshButton.Size = UDim2.new(0, 100, 0, 40)
-RefreshButton.Font = Enum.Font.Gotham
-RefreshButton.Text = "🔄 Refresh"
-RefreshButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-RefreshButton.TextSize = 14
-
-local RefreshCorner = Instance.new("UICorner")
-RefreshCorner.CornerRadius = UDim.new(0, 8)
-RefreshCorner.Parent = RefreshButton
-
--- Content Frame
 local ContentFrame = Instance.new("Frame")
 ContentFrame.Name = "ContentFrame"
 ContentFrame.Parent = MainFrame
 ContentFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 ContentFrame.Position = UDim2.new(0, 120, 0, 50)
-ContentFrame.Size = UDim2.new(0, 570, 0, 440)
+ContentFrame.Size = UDim2.new(0, 470, 0, 340)
 
 local ContentCorner = Instance.new("UICorner")
 ContentCorner.CornerRadius = UDim.new(0, 8)
 ContentCorner.Parent = ContentFrame
 
--- Search Box
-local SearchBox = Instance.new("TextBox")
-SearchBox.Name = "SearchBox"
-SearchBox.Parent = ContentFrame
-SearchBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-SearchBox.Position = UDim2.new(0, 10, 0, 10)
-SearchBox.Size = UDim2.new(1, -20, 0, 35)
-SearchBox.Font = Enum.Font.Gotham
-SearchBox.PlaceholderText = "🔍 Event suchen..."
-SearchBox.Text = ""
-SearchBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-SearchBox.TextSize = 14
-SearchBox.TextXAlignment = Enum.TextXAlignment.Left
-SearchBox.ClearTextOnFocus = false
-
-local SearchCorner = Instance.new("UICorner")
-SearchCorner.CornerRadius = UDim.new(0, 6)
-SearchCorner.Parent = SearchBox
-
--- Event Count Label
-local CountLabel = Instance.new("TextLabel")
-CountLabel.Name = "CountLabel"
-CountLabel.Parent = ContentFrame
-CountLabel.BackgroundTransparency = 1
-CountLabel.Position = UDim2.new(0, 10, 0, 50)
-CountLabel.Size = UDim2.new(1, -20, 0, 20)
-CountLabel.Font = Enum.Font.Gotham
-CountLabel.Text = "Events: 0"
-CountLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
-CountLabel.TextSize = 12
-CountLabel.TextXAlignment = Enum.TextXAlignment.Left
-
--- ScrollingFrame
 local ScrollFrame = Instance.new("ScrollingFrame")
 ScrollFrame.Name = "ScrollFrame"
 ScrollFrame.Parent = ContentFrame
 ScrollFrame.BackgroundTransparency = 1
-ScrollFrame.Position = UDim2.new(0, 5, 0, 75)
-ScrollFrame.Size = UDim2.new(1, -10, 1, -80)
+ScrollFrame.Size = UDim2.new(1, -10, 1, -10)
+ScrollFrame.Position = UDim2.new(0, 5, 0, 5)
 ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
 ScrollFrame.ScrollBarThickness = 8
 
--- Funktion: Alle RemoteEvents und BindableEvents sammeln (ERWEITERT)
-local function getAllEvents()
+-- Hilfsfunktionen: scan ReplicatedStorage nach RemoteEvents (für Events2-Liste)
+local function getAllRemoteEvents()
     local events = {}
-    local eventCount = 0
-    
-    local function searchInContainer(container, path, depth)
-        if depth > 10 then return end -- Verhindere zu tiefe Rekursion
-        
+    local function search(container, path)
         for _, obj in pairs(container:GetChildren()) do
-            local success = pcall(function()
-                local isEvent = obj:IsA("RemoteEvent") or 
-                               obj:IsA("RemoteFunction") or 
-                               obj:IsA("BindableEvent") or 
-                               obj:IsA("BindableFunction")
-                
-                if isEvent then
-                    eventCount = eventCount + 1
-                    table.insert(events, {
-                        name = obj.Name,
-                        object = obj,
-                        type = obj.ClassName,
-                        path = path,
-                        fullPath = path .. "." .. obj.Name,
-                        parent = container.Name
-                    })
-                end
-                
-                -- Durchsuche Unterordner
-                if obj:IsA("Folder") or obj:IsA("Configuration") or obj:IsA("ModuleScript") then
-                    searchInContainer(obj, path .. "." .. obj.Name, depth + 1)
-                end
-            end)
+            if obj:IsA("RemoteEvent") or obj:IsA("RemoteFunction") then
+                table.insert(events, {
+                    name = obj.Name,
+                    object = obj,
+                    type = obj.ClassName,
+                    path = path .. "." .. obj.Name
+                })
+            end
+            if obj:IsA("Folder") or obj:IsA("Configuration") then
+                search(obj, path .. "." .. obj.Name)
+            end
         end
     end
-    
-    -- Durchsuche alle wichtigen Locations
-    print("🔍 Durchsuche ReplicatedStorage...")
-    searchInContainer(ReplicatedStorage, "ReplicatedStorage", 0)
-    
-    print("🔍 Durchsuche Workspace...")
-    searchInContainer(workspace, "Workspace", 0)
-    
-    print("🔍 Durchsuche Players.LocalPlayer...")
-    if player.Character then
-        searchInContainer(player.Character, "Character", 0)
-    end
-    searchInContainer(player, "Player", 0)
-    
-    -- Durchsuche auch andere Services
-    local services = {
-        game:GetService("ServerScriptService"),
-        game:GetService("StarterPlayer"),
-        game:GetService("StarterGui"),
-        game:GetService("StarterPack"),
-        game:GetService("Lighting")
-    }
-    
-    for _, service in ipairs(services) do
-        pcall(function()
-            print("🔍 Durchsuche " .. service.Name .. "...")
-            searchInContainer(service, service.Name, 0)
-        end)
-    end
-    
-    print("✅ Gefundene Events: " .. eventCount)
-    
+    search(ReplicatedStorage, "ReplicatedStorage")
     return events
 end
 
--- Funktion: Items sammeln
+-- Items suchen (für Give-Tab)
 local function getGameItems()
     local items = {}
-    
-    local function searchForItems(container, path)
-        pcall(function()
-            for _, obj in pairs(container:GetDescendants()) do
-                pcall(function()
-                    if obj:IsA("Tool") or 
-                       (obj:IsA("Model") and obj:FindFirstChildOfClass("Tool")) or
-                       obj.Name:lower():find("weapon") or 
-                       obj.Name:lower():find("gun") or 
-                       obj.Name:lower():find("sword") or
-                       obj.Name:lower():find("item") then
-                        table.insert(items, {
-                            name = obj.Name,
-                            object = obj,
-                            path = path
-                        })
-                    end
-                end)
+    local function search(container, path)
+        for _, obj in pairs(container:GetDescendants()) do
+            if obj:IsA("Tool") or obj:IsA("Model") or (obj:IsA("Folder") and obj.Name:lower():find("item")) then
+                table.insert(items, {name = obj.Name, object = obj, path = path})
             end
-        end)
+        end
     end
-    
-    searchForItems(ReplicatedStorage, "ReplicatedStorage")
-    searchForItems(workspace, "Workspace")
-    
-    local uniqueItems = {}
+    if ReplicatedStorage:FindFirstChild("Items") then search(ReplicatedStorage.Items, "ReplicatedStorage.Items") end
+    if ReplicatedStorage:FindFirstChild("Weapons") then search(ReplicatedStorage.Weapons, "ReplicatedStorage.Weapons") end
+    if ReplicatedStorage:FindFirstChild("Tools") then search(ReplicatedStorage.Tools, "ReplicatedStorage.Tools") end
+    -- fallback: durchsuchen von ReplicatedStorage
+    search(ReplicatedStorage, "ReplicatedStorage")
+    local unique = {}
     local seen = {}
-    for _, item in ipairs(items) do
-        if not seen[item.name] then
-            seen[item.name] = true
-            table.insert(uniqueItems, item)
+    for _, it in ipairs(items) do
+        if not seen[it.name] then
+            seen[it.name] = true
+            table.insert(unique, it)
         end
     end
-    
-    return uniqueItems
+    return unique
 end
 
--- Funktion: Content leeren
+-- clear content
 local function clearContent()
-    for _, child in pairs(ScrollFrame:GetChildren()) do
-        if child:IsA("Frame") or child:IsA("TextButton") then
-            child:Destroy()
+    for _, c in pairs(ScrollFrame:GetChildren()) do
+        if c:IsA("Frame") or c:IsA("TextLabel") or c:IsA("TextButton") or c:IsA("TextBox") then
+            c:Destroy()
         end
     end
 end
 
--- Funktion: Event starten mit verschiedenen Methoden
-local function fireEvent(eventData, ...)
-    local args = {...}
-    local success = false
-    
-    print("🔥 Versuche Event zu starten: " .. eventData.name)
-    print("📊 Event Type: " .. eventData.type)
-    print("📦 Parameter: " .. tostring(#args))
-    
-    -- Methode 1: Direktes Feuern mit allen Varianten
-    local worked, errorMsg = pcall(function()
-        if eventData.object:IsA("RemoteEvent") then
-            -- Verschiedene Argument-Varianten ausprobieren
-            eventData.object:FireServer(unpack(args))
-            print("✅ RemoteEvent:FireServer() erfolgreich!")
-            success = true
-        elseif eventData.object:IsA("RemoteFunction") then
-            local result = eventData.object:InvokeServer(unpack(args))
-            print("✅ RemoteFunction:InvokeServer() erfolgreich! Result: " .. tostring(result))
-            success = true
-        elseif eventData.object:IsA("BindableEvent") then
-            eventData.object:Fire(unpack(args))
-            print("✅ BindableEvent:Fire() erfolgreich!")
-            success = true
-        elseif eventData.object:IsA("BindableFunction") then
-            local result = eventData.object:Invoke(unpack(args))
-            print("✅ BindableFunction:Invoke() erfolgreich! Result: " .. tostring(result))
-            success = true
-        end
-    end)
-    
-    if not worked then
-        print("❌ Fehler beim Event-Start: " .. tostring(errorMsg))
-    end
-    
-    -- Methode 2: Alternative Aufrufe ohne Parameter
-    if not success and #args > 0 then
-        print("🔄 Versuche ohne Parameter...")
-        pcall(function()
-            if eventData.object:IsA("RemoteEvent") then
-                eventData.object:FireServer()
-                print("✅ Event ohne Parameter gestartet!")
-                success = true
-            elseif eventData.object:IsA("RemoteFunction") then
-                eventData.object:InvokeServer()
-                print("✅ Event ohne Parameter gestartet!")
-                success = true
-            end
-        end)
-    end
-    
-    -- Methode 3: Versuche häufige Event-Namen-Pattern
-    if not success then
-        print("🔄 Versuche alternative Methoden...")
-        
-        -- Suche nach Start-Events
-        local possibleStarters = {
-            "StartEvent",
-            "ActivateEvent", 
-            "TriggerEvent",
-            "FireEvent",
-            "RunEvent"
-        }
-        
-        for _, starterName in ipairs(possibleStarters) do
-            local starter = ReplicatedStorage:FindFirstChild(starterName, true)
-            if starter and (starter:IsA("RemoteEvent") or starter:IsA("RemoteFunction")) then
-                pcall(function()
-                    if starter:IsA("RemoteEvent") then
-                        starter:FireServer(eventData.name, unpack(args))
-                        print("✅ Event über " .. starterName .. " gestartet!")
-                        success = true
-                    else
-                        starter:InvokeServer(eventData.name, unpack(args))
-                        print("✅ Event über " .. starterName .. " gestartet!")
-                        success = true
-                    end
-                end)
-                if success then break end
-            end
-        end
-    end
-    
-    -- Methode 4: Versuche mit Event-Namen als String
-    if not success then
-        pcall(function()
-            if eventData.object:IsA("RemoteEvent") then
-                eventData.object:FireServer(eventData.name, unpack(args))
-                print("✅ Event mit Namen als Parameter gestartet!")
-                success = true
-            elseif eventData.object:IsA("RemoteFunction") then
-                eventData.object:InvokeServer(eventData.name, unpack(args))
-                print("✅ Event mit Namen als Parameter gestartet!")
-                success = true
-            end
-        end)
-    end
-    
-    if success then
-        print("✅✅✅ EVENT ERFOLGREICH GESTARTET: " .. eventData.name .. " ✅✅✅")
-    else
-        print("⚠️ Konnte Event nicht starten. Event existiert aber im Spiel.")
-    end
-    
-    return success
+-- startSavedEvent: sendet Startanfrage an Server (nur EventName & Dauer)
+local function startSavedEvent(eventData, duration)
+    if not eventData or type(eventData.name) ~= "string" then return end
+    local dur = tonumber(duration) or 60
+    EventStart:FireServer(eventData.name, dur)
+    -- Option: lokale Bestätigung anzeigen
+    print("Anfrage: Event starten ->", eventData.name, dur)
 end
 
--- Funktion: Event zur Liste hinzufügen
-local function addEventToList(eventData)
-    for _, saved in ipairs(savedEvents) do
-        if saved.fullPath == eventData.fullPath then
-            print("⚠️ Event bereits in der Liste: " .. eventData.name)
-            return false
-        end
-    end
-    
-    table.insert(savedEvents, eventData)
-    print("✅ Event hinzugefügt: " .. eventData.name)
-    return true
-end
-
--- Funktion: Items geben
-local function giveItem(item)
-    pcall(function()
-        if item.object:IsA("Tool") then
-            local tool = item.object:Clone()
-            tool.Parent = player.Backpack
-            print("✅ Item gegeben: " .. item.name)
-        elseif item.object:IsA("Model") then
-            local model = item.object:Clone()
-            model.Parent = player.Backpack
-            print("✅ Item gegeben: " .. item.name)
-        end
-    end)
-end
-
--- Funktion: Gespeicherte Events anzeigen
-local function showSavedEvents()
+-- GUI: gespeicherte Events anzeigen
+function showSavedEvents()
     clearContent()
-    CountLabel.Text = "Gespeicherte Events: " .. #savedEvents
-    
     if #savedEvents == 0 then
         local NoEventsLabel = Instance.new("TextLabel")
         NoEventsLabel.Parent = ScrollFrame
         NoEventsLabel.BackgroundTransparency = 1
         NoEventsLabel.Position = UDim2.new(0, 10, 0, 10)
-        NoEventsLabel.Size = UDim2.new(1, -20, 0, 100)
-        NoEventsLabel.Font = Enum.Font.GothamBold
-        NoEventsLabel.Text = "📋 Keine Events gespeichert\n\n💡 Gehe zu 'Events2' und füge Events hinzu!"
-        NoEventsLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
-        NoEventsLabel.TextSize = 16
+        NoEventsLabel.Size = UDim2.new(1, -20, 0, 60)
+        NoEventsLabel.Font = Enum.Font.Gotham
+        NoEventsLabel.Text = "Keine Events in der Liste\n\nGehe zu 'Events2' um Events hinzuzufügen"
+        NoEventsLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+        NoEventsLabel.TextSize = 14
         NoEventsLabel.TextWrapped = true
         return
     end
-    
+
     for i, event in ipairs(savedEvents) do
         local EventFrame = Instance.new("Frame")
         EventFrame.Parent = ScrollFrame
         EventFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-        EventFrame.Position = UDim2.new(0, 10, 0, (i-1) * 130 + 10)
-        EventFrame.Size = UDim2.new(1, -20, 0, 120)
-        
-        local EventFrameCorner = Instance.new("UICorner")
-        EventFrameCorner.CornerRadius = UDim.new(0, 8)
-        EventFrameCorner.Parent = EventFrame
-        
+        EventFrame.Position = UDim2.new(0, 10, 0, (i-1) * 120 + 10)
+        EventFrame.Size = UDim2.new(1, -20, 0, 110)
+
         local EventName = Instance.new("TextLabel")
         EventName.Parent = EventFrame
         EventName.BackgroundTransparency = 1
         EventName.Position = UDim2.new(0, 10, 0, 5)
-        EventName.Size = UDim2.new(1, -20, 0, 22)
+        EventName.Size = UDim2.new(1, -20, 0, 25)
         EventName.Font = Enum.Font.GothamBold
-        EventName.Text = "📌 " .. event.name
+        EventName.Text = event.name
         EventName.TextColor3 = Color3.fromRGB(255, 255, 255)
-        EventName.TextSize = 15
+        EventName.TextSize = 16
         EventName.TextXAlignment = Enum.TextXAlignment.Left
-        EventName.TextTruncate = Enum.TextTruncate.AtEnd
-        
-        local EventInfo = Instance.new("TextLabel")
-        EventInfo.Parent = EventFrame
-        EventInfo.BackgroundTransparency = 1
-        EventInfo.Position = UDim2.new(0, 10, 0, 27)
-        EventInfo.Size = UDim2.new(1, -20, 0, 16)
-        EventInfo.Font = Enum.Font.Gotham
-        EventInfo.Text = "🔹 " .. event.type .. " | " .. event.path
-        EventInfo.TextColor3 = Color3.fromRGB(150, 200, 255)
-        EventInfo.TextSize = 10
-        EventInfo.TextXAlignment = Enum.TextXAlignment.Left
-        EventInfo.TextTruncate = Enum.TextTruncate.AtEnd
-        
-        -- Parameter Input
-        local ParamInput = Instance.new("TextBox")
-        ParamInput.Parent = EventFrame
-        ParamInput.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-        ParamInput.Position = UDim2.new(0, 10, 0, 50)
-        ParamInput.Size = UDim2.new(1, -20, 0, 30)
-        ParamInput.Font = Enum.Font.Gotham
-        ParamInput.PlaceholderText = "Parameter (z.B: 60, true, 'text') - Enter zum Starten"
-        ParamInput.Text = ""
-        ParamInput.TextColor3 = Color3.fromRGB(255, 255, 255)
-        ParamInput.TextSize = 12
-        ParamInput.TextXAlignment = Enum.TextXAlignment.Left
-        ParamInput.ClearTextOnFocus = false
-        
-        local ParamCorner = Instance.new("UICorner")
-        ParamCorner.CornerRadius = UDim.new(0, 5)
-        ParamCorner.Parent = ParamInput
-        
-        local ButtonFrame = Instance.new("Frame")
-        ButtonFrame.Parent = EventFrame
-        ButtonFrame.BackgroundTransparency = 1
-        ButtonFrame.Position = UDim2.new(0, 10, 0, 85)
-        ButtonFrame.Size = UDim2.new(1, -20, 0, 30)
-        
+
+        local DurationInput = Instance.new("TextBox")
+        DurationInput.Parent = EventFrame
+        DurationInput.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+        DurationInput.Position = UDim2.new(0, 10, 0, 55)
+        DurationInput.Size = UDim2.new(0, 150, 0, 30)
+        DurationInput.Font = Enum.Font.Gotham
+        DurationInput.PlaceholderText = "Dauer (Sekunden)"
+        DurationInput.Text = "60"
+        DurationInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+        DurationInput.TextSize = 14
+
         local StartButton = Instance.new("TextButton")
-        StartButton.Parent = ButtonFrame
+        StartButton.Parent = EventFrame
         StartButton.BackgroundColor3 = Color3.fromRGB(50, 200, 100)
-        StartButton.Position = UDim2.new(0, 0, 0, 0)
-        StartButton.Size = UDim2.new(0.48, 0, 1, 0)
+        StartButton.Position = UDim2.new(0, 170, 0, 55)
+        StartButton.Size = UDim2.new(0, 80, 0, 30)
         StartButton.Font = Enum.Font.GothamBold
-        StartButton.Text = "▶️ Starten"
+        StartButton.Text = "Starten"
         StartButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-        StartButton.TextSize = 13
-        
-        local StartCorner = Instance.new("UICorner")
-        StartCorner.CornerRadius = UDim.new(0, 5)
-        StartCorner.Parent = StartButton
-        
+        StartButton.TextSize = 14
+
         local RemoveButton = Instance.new("TextButton")
-        RemoveButton.Parent = ButtonFrame
+        RemoveButton.Parent = EventFrame
         RemoveButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-        RemoveButton.Position = UDim2.new(0.52, 0, 0, 0)
-        RemoveButton.Size = UDim2.new(0.48, 0, 1, 0)
+        RemoveButton.Position = UDim2.new(0, 260, 0, 55)
+        RemoveButton.Size = UDim2.new(0, 80, 0, 30)
         RemoveButton.Font = Enum.Font.GothamBold
-        RemoveButton.Text = "🗑️ Entfernen"
+        RemoveButton.Text = "Entfernen"
         RemoveButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-        RemoveButton.TextSize = 13
-        
-        local RemoveCorner = Instance.new("UICorner")
-        RemoveCorner.CornerRadius = UDim.new(0, 5)
-        RemoveCorner.Parent = RemoveButton
-        
-        local function startEvent()
-            local paramText = ParamInput.Text
-            local params = {}
-            
-            if paramText ~= "" then
-                for param in string.gmatch(paramText, "[^,]+") do
-                    param = param:match("^%s*(.-)%s*$") -- Trim
-                    
-                    if tonumber(param) then
-                        table.insert(params, tonumber(param))
-                    elseif param == "true" then
-                        table.insert(params, true)
-                    elseif param == "false" then
-                        table.insert(params, false)
-                    else
-                        param = param:gsub("^['\"]", ""):gsub("['\"]$", "")
-                        table.insert(params, param)
-                    end
-                end
-            end
-            
-            fireEvent(event, unpack(params))
-        end
-        
-        StartButton.MouseButton1Click:Connect(startEvent)
-        
-        ParamInput.FocusLost:Connect(function(enterPressed)
-            if enterPressed then
-                startEvent()
-            end
+        RemoveButton.TextSize = 12
+
+        StartButton.MouseButton1Click:Connect(function()
+            local duration = tonumber(DurationInput.Text) or 60
+            startSavedEvent(event, duration)
         end)
-        
+
         RemoveButton.MouseButton1Click:Connect(function()
             table.remove(savedEvents, i)
             showSavedEvents()
         end)
     end
-    
-    ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, #savedEvents * 130 + 20)
+
+    ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, #savedEvents * 120 + 20)
 end
 
--- Funktion: Alle RemoteEvents anzeigen mit Suche
-local function showAllRemoteEvents()
+-- GUI: alle RemoteEvents anzeigen (Events2)
+function showAllRemoteEvents()
     clearContent()
-    local allEvents = getAllEvents()
-    CountLabel.Text = "Alle Events: " .. #allEvents .. " gefunden"
-    
+    local allEvents = getAllRemoteEvents()
     if #allEvents == 0 then
         local NoEventsLabel = Instance.new("TextLabel")
         NoEventsLabel.Parent = ScrollFrame
         NoEventsLabel.BackgroundTransparency = 1
         NoEventsLabel.Position = UDim2.new(0, 10, 0, 10)
-        NoEventsLabel.Size = UDim2.new(1, -20, 0, 50)
-        NoEventsLabel.Font = Enum.Font.GothamBold
-        NoEventsLabel.Text = "❌ Keine Events gefunden\n\n🔄 Versuche 'Refresh'"
-        NoEventsLabel.TextColor3 = Color3.fromRGB(200, 100, 100)
+        NoEventsLabel.Size = UDim2.new(1, -20, 0, 30)
+        NoEventsLabel.Font = Enum.Font.Gotham
+        NoEventsLabel.Text = "Keine RemoteEvents im ReplicatedStorage gefunden"
+        NoEventsLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
         NoEventsLabel.TextSize = 14
-        NoEventsLabel.TextWrapped = true
         return
     end
-    
-    local function filterAndDisplay(searchText)
-        clearContent()
-        local filtered = {}
-        
-        searchText = searchText:lower()
-        
-        for _, event in ipairs(allEvents) do
-            if searchText == "" or 
-               event.name:lower():find(searchText) or 
-               event.path:lower():find(searchText) or
-               event.type:lower():find(searchText) then
-                table.insert(filtered, event)
-            end
-        end
-        
-        CountLabel.Text = "Events: " .. #filtered .. " / " .. #allEvents
-        
-        for i, event in ipairs(filtered) do
-            local EventFrame = Instance.new("Frame")
-            EventFrame.Parent = ScrollFrame
-            EventFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-            EventFrame.Position = UDim2.new(0, 5, 0, (i-1) * 75 + 5)
-            EventFrame.Size = UDim2.new(1, -10, 0, 70)
-            
-            local EventFrameCorner = Instance.new("UICorner")
-            EventFrameCorner.CornerRadius = UDim.new(0, 8)
-            EventFrameCorner.Parent = EventFrame
-            
-            local EventName = Instance.new("TextLabel")
-            EventName.Parent = EventFrame
-            EventName.BackgroundTransparency = 1
-            EventName.Position = UDim2.new(0, 10, 0, 5)
-            EventName.Size = UDim2.new(1, -120, 0, 20)
-            EventName.Font = Enum.Font.GothamBold
-            EventName.Text = event.name
-            EventName.TextColor3 = Color3.fromRGB(255, 255, 255)
-            EventName.TextSize = 13
-            EventName.TextXAlignment = Enum.TextXAlignment.Left
-            EventName.TextTruncate = Enum.TextTruncate.AtEnd
-            
-            local EventType = Instance.new("TextLabel")
-            EventType.Parent = EventFrame
-            EventType.BackgroundColor3 = Color3.fromRGB(70, 130, 200)
-            EventType.Position = UDim2.new(0, 10, 0, 27)
-            EventType.Size = UDim2.new(0, 100, 0, 16)
-            EventType.Font = Enum.Font.Gotham
-            EventType.Text = event.type
-            EventType.TextColor3 = Color3.fromRGB(255, 255, 255)
-            EventType.TextSize = 9
-            
-            local TypeCorner = Instance.new("UICorner")
-            TypeCorner.CornerRadius = UDim.new(0, 4)
-            TypeCorner.Parent = EventType
-            
-            local EventPath = Instance.new("TextLabel")
-            EventPath.Parent = EventFrame
-            EventPath.BackgroundTransparency = 1
-            EventPath.Position = UDim2.new(0, 10, 0, 45)
-            EventPath.Size = UDim2.new(1, -120, 0, 18)
-            EventPath.Font = Enum.Font.Gotham
-            EventPath.Text = "📂 " .. event.path
-            EventPath.TextColor3 = Color3.fromRGB(150, 150, 150)
-            EventPath.TextSize = 9
-            EventPath.TextXAlignment = Enum.TextXAlignment.Left
-            EventPath.TextTruncate = Enum.TextTruncate.AtEnd
-            
-            local AddButton = Instance.new("TextButton")
-            AddButton.Parent = EventFrame
-            AddButton.BackgroundColor3 = Color3.fromRGB(50, 200, 100)
-            AddButton.Position = UDim2.new(1, -105, 0, 10)
-            AddButton.Size = UDim2.new(0, 95, 0, 50)
-            AddButton.Font = Enum.Font.GothamBold
-            AddButton.Text = "➕ Hinzufügen"
-            AddButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-            AddButton.TextSize = 11
-            
-            local AddCorner = Instance.new("UICorner")
-            AddCorner.CornerRadius = UDim.new(0, 6)
-            AddCorner.Parent = AddButton
-            
-            AddButton.MouseButton1Click:Connect(function()
-                if addEventToList(event) then
-                    AddButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-                    AddButton.Text = "✅ Hinzugefügt"
-                end
-            end)
-        end
-        
-        ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, #filtered * 75 + 10)
+
+    local columns = 2
+    local itemWidth = 220
+    local itemHeight = 80
+    local spacing = 10
+
+    for i, event in ipairs(allEvents) do
+        local row = math.floor((i-1) / columns)
+        local col = (i-1) % columns
+
+        local EventFrame = Instance.new("Frame")
+        EventFrame.Parent = ScrollFrame
+        EventFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        EventFrame.Position = UDim2.new(0, col * (itemWidth + spacing) + 10, 0, row * (itemHeight + spacing) + 10)
+        EventFrame.Size = UDim2.new(0, itemWidth, 0, itemHeight)
+
+        local EventName = Instance.new("TextLabel")
+        EventName.Parent = EventFrame
+        EventName.BackgroundTransparency = 1
+        EventName.Position = UDim2.new(0, 10, 0, 5)
+        EventName.Size = UDim2.new(1, -20, 0, 25)
+        EventName.Font = Enum.Font.GothamBold
+        EventName.Text = event.name
+        EventName.TextColor3 = Color3.fromRGB(255, 255, 255)
+        EventName.TextSize = 13
+        EventName.TextXAlignment = Enum.TextXAlignment.Left
+
+        local EventType = Instance.new("TextLabel")
+        EventType.Parent = EventFrame
+        EventType.BackgroundTransparency = 1
+        EventType.Position = UDim2.new(0, 10, 0, 28)
+        EventType.Size = UDim2.new(1, -20, 0, 15)
+        EventType.Font = Enum.Font.Gotham
+        EventType.Text = event.type
+        EventType.TextColor3 = Color3.fromRGB(150, 150, 255)
+        EventType.TextSize = 10
+        EventType.TextXAlignment = Enum.TextXAlignment.Left
+
+        local AddButton = Instance.new("TextButton")
+        AddButton.Parent = EventFrame
+        AddButton.BackgroundColor3 = Color3.fromRGB(50, 200, 100)
+        AddButton.Position = UDim2.new(0, 10, 1, -35)
+        AddButton.Size = UDim2.new(1, -20, 0, 30)
+        AddButton.Font = Enum.Font.GothamBold
+        AddButton.Text = "Zu Events hinzufügen"
+        AddButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        AddButton.TextSize = 12
+
+        AddButton.MouseButton1Click:Connect(function()
+            -- füge nur Name und path hinzu — serverseitige Startlogik nutzt den Eventnamen
+            table.insert(savedEvents, {name = event.name, path = event.path, type = event.type})
+            AddButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+            AddButton.Text = "Hinzugefügt ✓"
+        end)
     end
-    
-    filterAndDisplay("")
-    
-    SearchBox.Changed:Connect(function(property)
-        if property == "Text" then
-            filterAndDisplay(SearchBox.Text)
-        end
-    end)
+
+    local rows = math.ceil(#allEvents / columns)
+    ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, rows * (itemHeight + spacing) + 20)
 end
 
--- Items Anzeige
-local function showItems()
+-- GUI: Items anzeigen
+function showItems()
     clearContent()
-    local gameItems = getGameItems()
-    CountLabel.Text = "Items: " .. #gameItems
-    
-    if #gameItems == 0 then
+    local items = getGameItems()
+    if #items == 0 then
         local NoItemsLabel = Instance.new("TextLabel")
         NoItemsLabel.Parent = ScrollFrame
+        NoEventsLabel = NoItemsLabel
         NoItemsLabel.BackgroundTransparency = 1
         NoItemsLabel.Position = UDim2.new(0, 10, 0, 10)
         NoItemsLabel.Size = UDim2.new(1, -20, 0, 30)
@@ -717,26 +347,22 @@ local function showItems()
         NoItemsLabel.TextSize = 14
         return
     end
-    
+
     local columns = 3
-    local itemWidth = 175
+    local itemWidth = 140
     local itemHeight = 80
     local spacing = 10
-    
-    for i, item in ipairs(gameItems) do
+
+    for i, item in ipairs(items) do
         local row = math.floor((i-1) / columns)
         local col = (i-1) % columns
-        
+
         local ItemFrame = Instance.new("Frame")
         ItemFrame.Parent = ScrollFrame
         ItemFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-        ItemFrame.Position = UDim2.new(0, col * (itemWidth + spacing) + 5, 0, row * (itemHeight + spacing) + 5)
+        ItemFrame.Position = UDim2.new(0, col * (itemWidth + spacing) + 10, 0, row * (itemHeight + spacing) + 10)
         ItemFrame.Size = UDim2.new(0, itemWidth, 0, itemHeight)
-        
-        local ItemCorner = Instance.new("UICorner")
-        ItemCorner.CornerRadius = UDim.new(0, 8)
-        ItemCorner.Parent = ItemFrame
-        
+
         local ItemName = Instance.new("TextLabel")
         ItemName.Parent = ItemFrame
         ItemName.BackgroundTransparency = 1
@@ -747,28 +373,25 @@ local function showItems()
         ItemName.TextColor3 = Color3.fromRGB(255, 255, 255)
         ItemName.TextSize = 12
         ItemName.TextWrapped = true
-        
+
         local GiveItemButton = Instance.new("TextButton")
         GiveItemButton.Parent = ItemFrame
         GiveItemButton.BackgroundColor3 = Color3.fromRGB(50, 200, 100)
         GiveItemButton.Position = UDim2.new(0, 10, 1, -35)
         GiveItemButton.Size = UDim2.new(1, -20, 0, 30)
         GiveItemButton.Font = Enum.Font.GothamBold
-        GiveItemButton.Text = "✅ Geben"
+        GiveItemButton.Text = "Geben"
         GiveItemButton.TextColor3 = Color3.fromRGB(255, 255, 255)
         GiveItemButton.TextSize = 12
-        
-        local GiveCorner = Instance.new("UICorner")
-        GiveCorner.CornerRadius = UDim.new(0, 5)
-        GiveCorner.Parent = GiveItemButton
-        
+
         GiveItemButton.MouseButton1Click:Connect(function()
-            giveItem(item)
+            -- send request an server – server prüft Berechtigungen
+            GiveItemReq:FireServer(item.name)
         end)
     end
-    
-    local rows = math.ceil(#gameItems / columns)
-    ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, rows * (itemHeight + spacing) + 10)
+
+    local rows = math.ceil(#items / columns)
+    ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, rows * (itemHeight + spacing) + 20)
 end
 
 -- Button Events
@@ -776,7 +399,6 @@ EventButton.MouseButton1Click:Connect(function()
     EventButton.BackgroundColor3 = Color3.fromRGB(50, 150, 250)
     Events2Button.BackgroundColor3 = Color3.fromRGB(160, 80, 200)
     GiveButton.BackgroundColor3 = Color3.fromRGB(40, 160, 80)
-    SearchBox.Visible = false
     showSavedEvents()
 end)
 
@@ -784,8 +406,6 @@ Events2Button.MouseButton1Click:Connect(function()
     Events2Button.BackgroundColor3 = Color3.fromRGB(200, 100, 250)
     EventButton.BackgroundColor3 = Color3.fromRGB(40, 120, 200)
     GiveButton.BackgroundColor3 = Color3.fromRGB(40, 160, 80)
-    SearchBox.Visible = true
-    SearchBox.Text = ""
     showAllRemoteEvents()
 end)
 
@@ -793,38 +413,20 @@ GiveButton.MouseButton1Click:Connect(function()
     GiveButton.BackgroundColor3 = Color3.fromRGB(50, 200, 100)
     EventButton.BackgroundColor3 = Color3.fromRGB(40, 120, 200)
     Events2Button.BackgroundColor3 = Color3.fromRGB(160, 80, 200)
-    SearchBox.Visible = false
     showItems()
-end)
-
-RefreshButton.MouseButton1Click:Connect(function()
-    RefreshButton.Text = "⏳ Laden..."
-    RefreshButton.BackgroundColor3 = Color3.fromRGB(150, 150, 150)
-    
-    task.wait(0.5)
-    
-    -- Aktualisiere die aktuelle Ansicht
-    if Events2Button.BackgroundColor3 == Color3.fromRGB(200, 100, 250) then
-        showAllRemoteEvents()
-    elseif EventButton.BackgroundColor3 == Color3.fromRGB(50, 150, 250) then
-        showSavedEvents()
-    elseif GiveButton.BackgroundColor3 == Color3.fromRGB(50, 200, 100) then
-        showItems()
-    end
-    
-    RefreshButton.Text = "🔄 Refresh"
-    RefreshButton.BackgroundColor3 = Color3.fromRGB(255, 150, 50)
 end)
 
 CloseButton.MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
 end)
 
--- Standardmäßig Events anzeigen
-SearchBox.Visible = false
-showSavedEvents()
+-- Reagiere auf Server-Broadcast (z. B. um Animationen/Visuals zu starten)
+EventBroadcast.OnClientEvent:Connect(function(eventName, duration, startTime)
+    print("Event gestartet:", eventName, duration, startTime)
+    -- Hier kannst du clientseitige Effekte starten (z. B. Partikel, Sound, UI)
+    -- Beispiel: falls MeteorShower, starte lokale Partikel VFX
+end)
 
-print("🚀 Brain AI GUI geladen!")
-print("📊 RemoteEvents gefunden: " .. #getAllEvents())
-print("🎁 Items gefunden: " .. #getGameItems())
-print("💾 Gespeicherte Events: " .. #savedEvents)
+-- Standard: Events-Tab öffnen
+showSavedEvents()
+print("Brain AI GUI geladen!")
