@@ -1,18 +1,16 @@
--- Brain AI GUI Script
-local ScreenGui = Instance.new("ScreenGui")
-local MainFrame = Instance.new("Frame")
-local TitleLabel = Instance.new("TextLabel")
-local EventButton = Instance.new("TextButton")
-local GiveButton = Instance.new("TextButton")
-local ContentFrame = Instance.new("Frame")
-local CloseButton = Instance.new("TextButton")
+-- Brain AI GUI Script mit echten Game Items & Events
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local player = Players.LocalPlayer
 
 -- ScreenGui Setup
+local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "BrainAIGui"
 ScreenGui.Parent = game.CoreGui
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
 -- Main Frame
+local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Parent = ScreenGui
 MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
@@ -22,12 +20,12 @@ MainFrame.Size = UDim2.new(0, 600, 0, 400)
 MainFrame.Active = true
 MainFrame.Draggable = true
 
--- Runde Ecken
 local UICorner = Instance.new("UICorner")
 UICorner.CornerRadius = UDim.new(0, 10)
 UICorner.Parent = MainFrame
 
 -- Titel
+local TitleLabel = Instance.new("TextLabel")
 TitleLabel.Name = "TitleLabel"
 TitleLabel.Parent = MainFrame
 TitleLabel.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
@@ -43,6 +41,7 @@ TitleCorner.CornerRadius = UDim.new(0, 10)
 TitleCorner.Parent = TitleLabel
 
 -- Close Button
+local CloseButton = Instance.new("TextButton")
 CloseButton.Name = "CloseButton"
 CloseButton.Parent = TitleLabel
 CloseButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
@@ -57,7 +56,8 @@ local CloseCorner = Instance.new("UICorner")
 CloseCorner.CornerRadius = UDim.new(0, 5)
 CloseCorner.Parent = CloseButton
 
--- Event Button (Links)
+-- Event Button
+local EventButton = Instance.new("TextButton")
 EventButton.Name = "EventButton"
 EventButton.Parent = MainFrame
 EventButton.BackgroundColor3 = Color3.fromRGB(50, 150, 250)
@@ -72,7 +72,8 @@ local EventCorner = Instance.new("UICorner")
 EventCorner.CornerRadius = UDim.new(0, 8)
 EventCorner.Parent = EventButton
 
--- Give Button (Links)
+-- Give Button
+local GiveButton = Instance.new("TextButton")
 GiveButton.Name = "GiveButton"
 GiveButton.Parent = MainFrame
 GiveButton.BackgroundColor3 = Color3.fromRGB(50, 200, 100)
@@ -87,7 +88,8 @@ local GiveCorner = Instance.new("UICorner")
 GiveCorner.CornerRadius = UDim.new(0, 8)
 GiveCorner.Parent = GiveButton
 
--- Content Frame (Rechts)
+-- Content Frame
+local ContentFrame = Instance.new("Frame")
 ContentFrame.Name = "ContentFrame"
 ContentFrame.Parent = MainFrame
 ContentFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
@@ -98,7 +100,7 @@ local ContentCorner = Instance.new("UICorner")
 ContentCorner.CornerRadius = UDim.new(0, 8)
 ContentCorner.Parent = ContentFrame
 
--- ScrollingFrame für Content
+-- ScrollingFrame
 local ScrollFrame = Instance.new("ScrollingFrame")
 ScrollFrame.Name = "ScrollFrame"
 ScrollFrame.Parent = ContentFrame
@@ -108,23 +110,98 @@ ScrollFrame.Position = UDim2.new(0, 5, 0, 5)
 ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
 ScrollFrame.ScrollBarThickness = 8
 
--- Events Liste (Beispiel-Events)
-local events = {
-    {name = "Halloween Event", description = "Spooky Halloween Event"},
-    {name = "Christmas Event", description = "Festive Christmas Event"},
-    {name = "Easter Event", description = "Easter Egg Hunt"},
-    {name = "Summer Event", description = "Beach Party Event"},
-    {name = "Birthday Event", description = "Special Birthday Celebration"}
-}
+-- Funktion: Items aus dem Spiel sammeln
+local function getGameItems()
+    local items = {}
+    
+    -- Suche in ReplicatedStorage
+    local function searchForItems(container, path)
+        for _, obj in pairs(container:GetDescendants()) do
+            if obj:IsA("Tool") or obj:IsA("Model") or 
+               (obj:IsA("Folder") and obj.Name:lower():find("item")) or
+               (obj:IsA("Folder") and obj.Name:lower():find("weapon")) or
+               obj.Name:lower():find("gun") or obj.Name:lower():find("sword") then
+                table.insert(items, {
+                    name = obj.Name,
+                    object = obj,
+                    path = path
+                })
+            end
+        end
+    end
+    
+    -- Suche in verschiedenen Locations
+    if ReplicatedStorage:FindFirstChild("Items") then
+        searchForItems(ReplicatedStorage.Items, "ReplicatedStorage.Items")
+    end
+    
+    if ReplicatedStorage:FindFirstChild("Weapons") then
+        searchForItems(ReplicatedStorage.Weapons, "ReplicatedStorage.Weapons")
+    end
+    
+    if ReplicatedStorage:FindFirstChild("Tools") then
+        searchForItems(ReplicatedStorage.Tools, "ReplicatedStorage.Tools")
+    end
+    
+    -- Durchsuche komplettes ReplicatedStorage
+    searchForItems(ReplicatedStorage, "ReplicatedStorage")
+    
+    -- Suche auch im Workspace
+    if workspace:FindFirstChild("Items") then
+        searchForItems(workspace.Items, "Workspace.Items")
+    end
+    
+    -- Entferne Duplikate
+    local uniqueItems = {}
+    local seen = {}
+    for _, item in ipairs(items) do
+        if not seen[item.name] then
+            seen[item.name] = true
+            table.insert(uniqueItems, item)
+        end
+    end
+    
+    return uniqueItems
+end
 
--- Items Liste (Beispiel-Items)
-local items = {
-    "Sword", "Gun", "Money", "Diamond", "Gold",
-    "Health Potion", "Speed Boost", "Shield", "Armor", "Wings",
-    "Pet", "Vehicle", "Backpack", "Tool", "Weapon"
-}
+-- Funktion: Events aus dem Spiel sammeln
+local function getGameEvents()
+    local events = {}
+    
+    -- Suche nach Event-RemoteEvents und RemoteFunctions
+    local function searchForEvents(container)
+        for _, obj in pairs(container:GetDescendants()) do
+            if obj:IsA("RemoteEvent") or obj:IsA("RemoteFunction") then
+                if obj.Name:lower():find("event") or 
+                   obj.Name:lower():find("start") or
+                   obj.Name:lower():find("activate") then
+                    table.insert(events, {
+                        name = obj.Name,
+                        object = obj,
+                        type = obj.ClassName
+                    })
+                end
+            end
+        end
+    end
+    
+    searchForEvents(ReplicatedStorage)
+    
+    -- Suche auch nach Event-Folders
+    if ReplicatedStorage:FindFirstChild("Events") then
+        for _, event in pairs(ReplicatedStorage.Events:GetChildren()) do
+            table.insert(events, {
+                name = event.Name,
+                object = event,
+                type = "Folder"
+            })
+        end
+    end
+    
+    return events
+end
 
--- Funktion zum Leeren des Content
+-- Funktion: Content leeren
 local function clearContent()
     for _, child in pairs(ScrollFrame:GetChildren()) do
         if child:IsA("Frame") or child:IsA("TextButton") then
@@ -133,11 +210,65 @@ local function clearContent()
     end
 end
 
+-- Funktion: Items geben
+local function giveItem(item)
+    pcall(function()
+        if item.object:IsA("Tool") then
+            local tool = item.object:Clone()
+            tool.Parent = player.Backpack
+            print("Item gegeben: " .. item.name)
+        elseif item.object:IsA("Model") then
+            local model = item.object:Clone()
+            model.Parent = player.Backpack
+            print("Item gegeben: " .. item.name)
+        end
+        
+        -- Versuche auch über RemoteEvent zu geben
+        if ReplicatedStorage:FindFirstChild("GiveItem") then
+            ReplicatedStorage.GiveItem:FireServer(item.name)
+        elseif ReplicatedStorage:FindFirstChild("ItemShop") then
+            ReplicatedStorage.ItemShop:FireServer("Buy", item.name)
+        end
+    end)
+end
+
+-- Funktion: Event starten
+local function startEvent(event, duration)
+    pcall(function()
+        if event.object:IsA("RemoteEvent") then
+            event.object:FireServer(duration or 60)
+            print("Event gestartet: " .. event.name .. " für " .. (duration or 60) .. " Sekunden")
+        elseif event.object:IsA("RemoteFunction") then
+            event.object:InvokeServer(duration or 60)
+            print("Event gestartet: " .. event.name .. " für " .. (duration or 60) .. " Sekunden")
+        end
+        
+        -- Alternative Event-Start Methoden
+        if ReplicatedStorage:FindFirstChild("StartEvent") then
+            ReplicatedStorage.StartEvent:FireServer(event.name, duration or 60)
+        end
+    end)
+end
+
 -- Event Anzeige
 local function showEvents()
     clearContent()
+    local gameEvents = getGameEvents()
     
-    for i, event in ipairs(events) do
+    if #gameEvents == 0 then
+        local NoEventsLabel = Instance.new("TextLabel")
+        NoEventsLabel.Parent = ScrollFrame
+        NoEventsLabel.BackgroundTransparency = 1
+        NoEventsLabel.Position = UDim2.new(0, 10, 0, 10)
+        NoEventsLabel.Size = UDim2.new(1, -20, 0, 30)
+        NoEventsLabel.Font = Enum.Font.Gotham
+        NoEventsLabel.Text = "Keine Events gefunden"
+        NoEventsLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+        NoEventsLabel.TextSize = 14
+        return
+    end
+    
+    for i, event in ipairs(gameEvents) do
         local EventFrame = Instance.new("Frame")
         EventFrame.Parent = ScrollFrame
         EventFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
@@ -159,16 +290,16 @@ local function showEvents()
         EventName.TextSize = 16
         EventName.TextXAlignment = Enum.TextXAlignment.Left
         
-        local EventDesc = Instance.new("TextLabel")
-        EventDesc.Parent = EventFrame
-        EventDesc.BackgroundTransparency = 1
-        EventDesc.Position = UDim2.new(0, 10, 0, 30)
-        EventDesc.Size = UDim2.new(1, -20, 0, 20)
-        EventDesc.Font = Enum.Font.Gotham
-        EventDesc.Text = event.description
-        EventDesc.TextColor3 = Color3.fromRGB(200, 200, 200)
-        EventDesc.TextSize = 12
-        EventDesc.TextXAlignment = Enum.TextXAlignment.Left
+        local EventType = Instance.new("TextLabel")
+        EventType.Parent = EventFrame
+        EventType.BackgroundTransparency = 1
+        EventType.Position = UDim2.new(0, 10, 0, 30)
+        EventType.Size = UDim2.new(1, -20, 0, 20)
+        EventType.Font = Enum.Font.Gotham
+        EventType.Text = "Type: " .. event.type
+        EventType.TextColor3 = Color3.fromRGB(200, 200, 200)
+        EventType.TextSize = 12
+        EventType.TextXAlignment = Enum.TextXAlignment.Left
         
         local DurationInput = Instance.new("TextBox")
         DurationInput.Parent = EventFrame
@@ -176,8 +307,8 @@ local function showEvents()
         DurationInput.Position = UDim2.new(0, 10, 0, 55)
         DurationInput.Size = UDim2.new(0, 150, 0, 30)
         DurationInput.Font = Enum.Font.Gotham
-        DurationInput.PlaceholderText = "Dauer (Minuten)"
-        DurationInput.Text = ""
+        DurationInput.PlaceholderText = "Dauer (Sekunden)"
+        DurationInput.Text = "60"
         DurationInput.TextColor3 = Color3.fromRGB(255, 255, 255)
         DurationInput.TextSize = 14
         
@@ -200,49 +331,82 @@ local function showEvents()
         StartCorner.Parent = StartButton
         
         StartButton.MouseButton1Click:Connect(function()
-            local duration = DurationInput.Text
-            print("Event gestartet: " .. event.name .. " für " .. duration .. " Minuten")
-            -- Hier kannst du deinen Event-Start Code einfügen
+            local duration = tonumber(DurationInput.Text) or 60
+            startEvent(event, duration)
         end)
     end
     
-    ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, #events * 120 + 20)
+    ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, #gameEvents * 120 + 20)
 end
 
--- Give Items Anzeige
+-- Items Anzeige
 local function showItems()
     clearContent()
+    local gameItems = getGameItems()
+    
+    if #gameItems == 0 then
+        local NoItemsLabel = Instance.new("TextLabel")
+        NoItemsLabel.Parent = ScrollFrame
+        NoItemsLabel.BackgroundTransparency = 1
+        NoItemsLabel.Position = UDim2.new(0, 10, 0, 10)
+        NoItemsLabel.Size = UDim2.new(1, -20, 0, 30)
+        NoItemsLabel.Font = Enum.Font.Gotham
+        NoItemsLabel.Text = "Keine Items gefunden"
+        NoItemsLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+        NoItemsLabel.TextSize = 14
+        return
+    end
     
     local columns = 3
     local itemWidth = 140
-    local itemHeight = 50
+    local itemHeight = 80
     local spacing = 10
     
-    for i, item in ipairs(items) do
+    for i, item in ipairs(gameItems) do
         local row = math.floor((i-1) / columns)
         local col = (i-1) % columns
         
-        local ItemButton = Instance.new("TextButton")
-        ItemButton.Parent = ScrollFrame
-        ItemButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-        ItemButton.Position = UDim2.new(0, col * (itemWidth + spacing) + 10, 0, row * (itemHeight + spacing) + 10)
-        ItemButton.Size = UDim2.new(0, itemWidth, 0, itemHeight)
-        ItemButton.Font = Enum.Font.Gotham
-        ItemButton.Text = item
-        ItemButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-        ItemButton.TextSize = 14
+        local ItemFrame = Instance.new("Frame")
+        ItemFrame.Parent = ScrollFrame
+        ItemFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        ItemFrame.Position = UDim2.new(0, col * (itemWidth + spacing) + 10, 0, row * (itemHeight + spacing) + 10)
+        ItemFrame.Size = UDim2.new(0, itemWidth, 0, itemHeight)
         
         local ItemCorner = Instance.new("UICorner")
         ItemCorner.CornerRadius = UDim.new(0, 8)
-        ItemCorner.Parent = ItemButton
+        ItemCorner.Parent = ItemFrame
         
-        ItemButton.MouseButton1Click:Connect(function()
-            print("Item gegeben: " .. item)
-            -- Hier kannst du deinen Give-Item Code einfügen
+        local ItemName = Instance.new("TextLabel")
+        ItemName.Parent = ItemFrame
+        ItemName.BackgroundTransparency = 1
+        ItemName.Position = UDim2.new(0, 5, 0, 5)
+        ItemName.Size = UDim2.new(1, -10, 0, 40)
+        ItemName.Font = Enum.Font.GothamBold
+        ItemName.Text = item.name
+        ItemName.TextColor3 = Color3.fromRGB(255, 255, 255)
+        ItemName.TextSize = 12
+        ItemName.TextWrapped = true
+        
+        local GiveItemButton = Instance.new("TextButton")
+        GiveItemButton.Parent = ItemFrame
+        GiveItemButton.BackgroundColor3 = Color3.fromRGB(50, 200, 100)
+        GiveItemButton.Position = UDim2.new(0, 10, 1, -35)
+        GiveItemButton.Size = UDim2.new(1, -20, 0, 30)
+        GiveItemButton.Font = Enum.Font.GothamBold
+        GiveItemButton.Text = "Geben"
+        GiveItemButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        GiveItemButton.TextSize = 12
+        
+        local GiveCorner = Instance.new("UICorner")
+        GiveCorner.CornerRadius = UDim.new(0, 5)
+        GiveCorner.Parent = GiveItemButton
+        
+        GiveItemButton.MouseButton1Click:Connect(function()
+            giveItem(item)
         end)
     end
     
-    local rows = math.ceil(#items / columns)
+    local rows = math.ceil(#gameItems / columns)
     ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, rows * (itemHeight + spacing) + 20)
 end
 
@@ -267,3 +431,5 @@ end)
 showEvents()
 
 print("Brain AI GUI geladen!")
+print("Items gefunden: " .. #getGameItems())
+print("Events gefunden: " .. #getGameEvents())
