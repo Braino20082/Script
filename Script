@@ -301,26 +301,104 @@ local function fireEvent(eventData, ...)
     local args = {...}
     local success = false
     
-    -- Methode 1: Direktes Feuern
-    pcall(function()
+    print("🔥 Versuche Event zu starten: " .. eventData.name)
+    print("📊 Event Type: " .. eventData.type)
+    print("📦 Parameter: " .. tostring(#args))
+    
+    -- Methode 1: Direktes Feuern mit allen Varianten
+    local worked, errorMsg = pcall(function()
         if eventData.object:IsA("RemoteEvent") then
+            -- Verschiedene Argument-Varianten ausprobieren
             eventData.object:FireServer(unpack(args))
+            print("✅ RemoteEvent:FireServer() erfolgreich!")
             success = true
-            print("✅ Event gefeuert (RemoteEvent): " .. eventData.name)
         elseif eventData.object:IsA("RemoteFunction") then
             local result = eventData.object:InvokeServer(unpack(args))
+            print("✅ RemoteFunction:InvokeServer() erfolgreich! Result: " .. tostring(result))
             success = true
-            print("✅ Event aufgerufen (RemoteFunction): " .. eventData.name .. " | Result: " .. tostring(result))
         elseif eventData.object:IsA("BindableEvent") then
             eventData.object:Fire(unpack(args))
+            print("✅ BindableEvent:Fire() erfolgreich!")
             success = true
-            print("✅ Event gefeuert (BindableEvent): " .. eventData.name)
         elseif eventData.object:IsA("BindableFunction") then
             local result = eventData.object:Invoke(unpack(args))
+            print("✅ BindableFunction:Invoke() erfolgreich! Result: " .. tostring(result))
             success = true
-            print("✅ Event aufgerufen (BindableFunction): " .. eventData.name .. " | Result: " .. tostring(result))
         end
     end)
+    
+    if not worked then
+        print("❌ Fehler beim Event-Start: " .. tostring(errorMsg))
+    end
+    
+    -- Methode 2: Alternative Aufrufe ohne Parameter
+    if not success and #args > 0 then
+        print("🔄 Versuche ohne Parameter...")
+        pcall(function()
+            if eventData.object:IsA("RemoteEvent") then
+                eventData.object:FireServer()
+                print("✅ Event ohne Parameter gestartet!")
+                success = true
+            elseif eventData.object:IsA("RemoteFunction") then
+                eventData.object:InvokeServer()
+                print("✅ Event ohne Parameter gestartet!")
+                success = true
+            end
+        end)
+    end
+    
+    -- Methode 3: Versuche häufige Event-Namen-Pattern
+    if not success then
+        print("🔄 Versuche alternative Methoden...")
+        
+        -- Suche nach Start-Events
+        local possibleStarters = {
+            "StartEvent",
+            "ActivateEvent", 
+            "TriggerEvent",
+            "FireEvent",
+            "RunEvent"
+        }
+        
+        for _, starterName in ipairs(possibleStarters) do
+            local starter = ReplicatedStorage:FindFirstChild(starterName, true)
+            if starter and (starter:IsA("RemoteEvent") or starter:IsA("RemoteFunction")) then
+                pcall(function()
+                    if starter:IsA("RemoteEvent") then
+                        starter:FireServer(eventData.name, unpack(args))
+                        print("✅ Event über " .. starterName .. " gestartet!")
+                        success = true
+                    else
+                        starter:InvokeServer(eventData.name, unpack(args))
+                        print("✅ Event über " .. starterName .. " gestartet!")
+                        success = true
+                    end
+                end)
+                if success then break end
+            end
+        end
+    end
+    
+    -- Methode 4: Versuche mit Event-Namen als String
+    if not success then
+        pcall(function()
+            if eventData.object:IsA("RemoteEvent") then
+                eventData.object:FireServer(eventData.name, unpack(args))
+                print("✅ Event mit Namen als Parameter gestartet!")
+                success = true
+            elseif eventData.object:IsA("RemoteFunction") then
+                eventData.object:InvokeServer(eventData.name, unpack(args))
+                print("✅ Event mit Namen als Parameter gestartet!")
+                success = true
+            end
+        end)
+    end
+    
+    if success then
+        print("✅✅✅ EVENT ERFOLGREICH GESTARTET: " .. eventData.name .. " ✅✅✅")
+    else
+        print("⚠️ Konnte Event nicht starten. Event existiert aber im Spiel.")
+    end
     
     return success
 end
@@ -655,4 +733,98 @@ local function showItems()
         ItemFrame.Position = UDim2.new(0, col * (itemWidth + spacing) + 5, 0, row * (itemHeight + spacing) + 5)
         ItemFrame.Size = UDim2.new(0, itemWidth, 0, itemHeight)
         
-        local ItemCorner = Instance.new("UICor
+        local ItemCorner = Instance.new("UICorner")
+        ItemCorner.CornerRadius = UDim.new(0, 8)
+        ItemCorner.Parent = ItemFrame
+        
+        local ItemName = Instance.new("TextLabel")
+        ItemName.Parent = ItemFrame
+        ItemName.BackgroundTransparency = 1
+        ItemName.Position = UDim2.new(0, 5, 0, 5)
+        ItemName.Size = UDim2.new(1, -10, 0, 40)
+        ItemName.Font = Enum.Font.GothamBold
+        ItemName.Text = item.name
+        ItemName.TextColor3 = Color3.fromRGB(255, 255, 255)
+        ItemName.TextSize = 12
+        ItemName.TextWrapped = true
+        
+        local GiveItemButton = Instance.new("TextButton")
+        GiveItemButton.Parent = ItemFrame
+        GiveItemButton.BackgroundColor3 = Color3.fromRGB(50, 200, 100)
+        GiveItemButton.Position = UDim2.new(0, 10, 1, -35)
+        GiveItemButton.Size = UDim2.new(1, -20, 0, 30)
+        GiveItemButton.Font = Enum.Font.GothamBold
+        GiveItemButton.Text = "✅ Geben"
+        GiveItemButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        GiveItemButton.TextSize = 12
+        
+        local GiveCorner = Instance.new("UICorner")
+        GiveCorner.CornerRadius = UDim.new(0, 5)
+        GiveCorner.Parent = GiveItemButton
+        
+        GiveItemButton.MouseButton1Click:Connect(function()
+            giveItem(item)
+        end)
+    end
+    
+    local rows = math.ceil(#gameItems / columns)
+    ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, rows * (itemHeight + spacing) + 10)
+end
+
+-- Button Events
+EventButton.MouseButton1Click:Connect(function()
+    EventButton.BackgroundColor3 = Color3.fromRGB(50, 150, 250)
+    Events2Button.BackgroundColor3 = Color3.fromRGB(160, 80, 200)
+    GiveButton.BackgroundColor3 = Color3.fromRGB(40, 160, 80)
+    SearchBox.Visible = false
+    showSavedEvents()
+end)
+
+Events2Button.MouseButton1Click:Connect(function()
+    Events2Button.BackgroundColor3 = Color3.fromRGB(200, 100, 250)
+    EventButton.BackgroundColor3 = Color3.fromRGB(40, 120, 200)
+    GiveButton.BackgroundColor3 = Color3.fromRGB(40, 160, 80)
+    SearchBox.Visible = true
+    SearchBox.Text = ""
+    showAllRemoteEvents()
+end)
+
+GiveButton.MouseButton1Click:Connect(function()
+    GiveButton.BackgroundColor3 = Color3.fromRGB(50, 200, 100)
+    EventButton.BackgroundColor3 = Color3.fromRGB(40, 120, 200)
+    Events2Button.BackgroundColor3 = Color3.fromRGB(160, 80, 200)
+    SearchBox.Visible = false
+    showItems()
+end)
+
+RefreshButton.MouseButton1Click:Connect(function()
+    RefreshButton.Text = "⏳ Laden..."
+    RefreshButton.BackgroundColor3 = Color3.fromRGB(150, 150, 150)
+    
+    task.wait(0.5)
+    
+    -- Aktualisiere die aktuelle Ansicht
+    if Events2Button.BackgroundColor3 == Color3.fromRGB(200, 100, 250) then
+        showAllRemoteEvents()
+    elseif EventButton.BackgroundColor3 == Color3.fromRGB(50, 150, 250) then
+        showSavedEvents()
+    elseif GiveButton.BackgroundColor3 == Color3.fromRGB(50, 200, 100) then
+        showItems()
+    end
+    
+    RefreshButton.Text = "🔄 Refresh"
+    RefreshButton.BackgroundColor3 = Color3.fromRGB(255, 150, 50)
+end)
+
+CloseButton.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+end)
+
+-- Standardmäßig Events anzeigen
+SearchBox.Visible = false
+showSavedEvents()
+
+print("🚀 Brain AI GUI geladen!")
+print("📊 RemoteEvents gefunden: " .. #getAllEvents())
+print("🎁 Items gefunden: " .. #getGameItems())
+print("💾 Gespeicherte Events: " .. #savedEvents)
